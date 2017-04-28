@@ -28,10 +28,6 @@ typedef stopwatch *pstopwatch;
 
 #include "settings.h"
 
-#ifdef USE_SIMD
-#include "simd.h"
-#endif
-
 /* ------------------------------------------------------------
  * Miscellaneous
  * ------------------------------------------------------------ */
@@ -81,42 +77,6 @@ uninit_h2lib();
 /* ------------------------------------------------------------
  * General utility macros and functions
  * ------------------------------------------------------------ */
-
-/**
- * @brief Wrapper for either aligned or not align memory allocation function
- * @param sz Number of bytes that should be allocated.
- */
-#ifdef USE_SIMD
-#define h2_malloc(sz) _mm_malloc(sz, VALIGN)
-#else
-#define h2_malloc(sz) malloc(sz)
-#endif
-
-/**
- * @brief Wrapper for either aligned or not align memory free function
- * @param p Pointer to an object that should be freed.
- */
-#ifdef USE_SIMD
-#define h2_free(p) _mm_free(p)
-#else
-#define h2_free(p) free(p)
-#endif
-
-
-/**
- * @brief Current amount of allocated memory (bytes)
- * @return Current amount of currently allocated memory is returned.
- */
-HEADER_PREFIX size_t
-get_current_memory();
-
-/**
- * @brief Round up some value x to the nearest multiple of N.
- * @param x Value that should be round up to nearest multiple of N.
- * @param N Muliples of N are used for rounding up x.
- * @return ((x + N - 1) / N) * N
- */
-#define ROUNDUP(x, N) ((((x) + (N) - 1) / (N)) * (N))
 
 #ifdef ABS
 #undef ABS

@@ -93,194 +93,12 @@ uninit_h2lib()
  Memory management
  ------------------------------------------------------------ */
 
-#ifdef TRACE_MEMORY
-
-#ifdef USE_SIMD
-#define ALLOC_OFFSET (VALIGN)
-#else
-#define ALLOC_OFFSET (sizeof(size_t))
-#endif
-
 void     *
 _h2_allocmem(size_t sz, const char *filename, int line)
 {
   void     *ptr;
 
-  sz += ALLOC_OFFSET;
-
-  ptr = h2_malloc(sz);
-  if (ptr == NULL && sz > 0) {
-    (void) fprintf(stderr, "Memory allocation of %lu bytes failed in %s:%d\n",
-		   (unsigned long) sz, filename, line);
-    abort();
-  }
-
-  *((size_t *) ptr) = sz;
-
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
-  current_memory += sz;
-
-  return ptr + ALLOC_OFFSET;
-}
-
-uint     *
-_h2_allocuint(size_t sz, const char *filename, int line)
-{
-  uint     *ptr;
-  size_t    dsz;
-
-  dsz = sizeof(uint) * sz + ALLOC_OFFSET;
-  if ((dsz - ALLOC_OFFSET) / sizeof(uint) != sz) {
-    (void) fprintf(stderr, "Integer overflow in vector allocation in %s:%d\n",
-		   filename, line);
-    abort();
-  }
-
-  ptr = (uint *) h2_malloc(dsz);
-  if (ptr == NULL && dsz > 0) {
-    (void) fprintf(stderr,
-		   "Vector allocation of %lu entries failed in %s:%d\n",
-		   (unsigned long) sz, filename, line);
-    abort();
-  }
-
-  *((size_t *) ptr) = dsz;
-
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
-  current_memory += dsz;
-
-  return (uint *) ((void *) ptr + ALLOC_OFFSET);
-}
-
-real     *
-_h2_allocreal(size_t sz, const char *filename, int line)
-{
-  real     *ptr;
-  size_t    dsz;
-
-  dsz = sizeof(real) * sz + ALLOC_OFFSET;
-  if ((dsz - ALLOC_OFFSET) / sizeof(real) != sz) {
-    (void) fprintf(stderr, "Integer overflow in vector allocation in %s:%d\n",
-		   filename, line);
-    abort();
-  }
-
-  ptr = (real *) h2_malloc(dsz);
-  if (ptr == NULL && dsz > 0) {
-    (void) fprintf(stderr,
-		   "Vector allocation of %lu entries failed in %s:%d\n",
-		   (unsigned long) sz, filename, line);
-    abort();
-  }
-
-  *((size_t *) ptr) = dsz;
-
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
-  current_memory += dsz;
-
-  return (real *) ((void *) ptr + ALLOC_OFFSET);
-}
-
-field    *
-_h2_allocfield(size_t sz, const char *filename, int line)
-{
-  field    *ptr;
-  size_t    dsz;
-
-  dsz = sizeof(field) * sz + ALLOC_OFFSET;
-  if ((dsz - ALLOC_OFFSET) / sizeof(field) != sz) {
-    (void) fprintf(stderr, "Integer overflow in vector allocation in %s:%d\n",
-		   filename, line);
-    abort();
-  }
-
-  ptr = (field *) h2_malloc(dsz);
-  if (ptr == NULL && dsz > 0) {
-    (void) fprintf(stderr,
-		   "Vector allocation of %lu entries failed in %s:%d\n",
-		   (unsigned long) sz, filename, line);
-    abort();
-  }
-
-  *((size_t *) ptr) = dsz;
-
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
-  current_memory += dsz;
-
-  return (field *) ((void *) ptr + ALLOC_OFFSET);
-}
-
-field    *
-_h2_allocmatrix(size_t rows, size_t cols, const char *filename, int line)
-{
-  field    *ptr;
-  size_t    dsz;
-
-  dsz = sizeof(field) * rows * cols + ALLOC_OFFSET;
-  if ((dsz - ALLOC_OFFSET) / sizeof(field) != rows * cols) {
-    (void) fprintf(stderr, "Integer overflow in matrix allocation in %s:%d\n",
-		   filename, line);
-    abort();
-  }
-
-  ptr = (field *) h2_malloc(dsz);
-  if (ptr == NULL && dsz > 0) {
-    (void) fprintf(stderr,
-		   "Matrix allocation with %lu rows and %lu columns failed in %s:%d\n",
-		   (unsigned long) rows, (unsigned long) cols, filename,
-		   line);
-    abort();
-  }
-
-  *((size_t *) ptr) = dsz;
-
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
-  current_memory += dsz;
-
-  return (field *) ((void *) ptr + ALLOC_OFFSET);
-}
-
-void
-freemem(void *ptr)
-{
-  size_t    sz;
-
-  if (ptr != NULL) {
-    sz = *(size_t *) (ptr - ALLOC_OFFSET);
-
-    h2_free(ptr - ALLOC_OFFSET);
-
-    assert(current_memory >= sz);
-
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
-    current_memory -= sz;
-  }
-}
-
-size_t
-get_current_memory()
-{
-  return current_memory;
-}
-#else
-void     *
-_h2_allocmem(size_t sz, const char *filename, int line)
-{
-  void     *ptr;
-
-  ptr = h2_malloc(sz);
+  ptr = malloc(sz);
   if (ptr == NULL && sz > 0) {
     (void) fprintf(stderr, "Memory allocation of %lu bytes failed in %s:%d\n",
 		   (unsigned long) sz, filename, line);
@@ -303,7 +121,7 @@ _h2_allocuint(size_t sz, const char *filename, int line)
     abort();
   }
 
-  ptr = (uint *) h2_malloc(dsz);
+  ptr = (uint *) malloc(dsz);
   if (ptr == NULL && dsz > 0) {
     (void) fprintf(stderr,
 		   "Vector allocation of %lu entries failed in %s:%d\n",
@@ -327,7 +145,7 @@ _h2_allocreal(size_t sz, const char *filename, int line)
     abort();
   }
 
-  ptr = (real *) h2_malloc(dsz);
+  ptr = (real *) malloc(dsz);
   if (ptr == NULL && dsz > 0) {
     (void) fprintf(stderr,
 		   "Vector allocation of %lu entries failed in %s:%d\n",
@@ -351,7 +169,7 @@ _h2_allocfield(size_t sz, const char *filename, int line)
     abort();
   }
 
-  ptr = (field *) h2_malloc(dsz);
+  ptr = (field *) malloc(dsz);
   if (ptr == NULL && dsz > 0) {
     (void) fprintf(stderr,
 		   "Vector allocation of %lu entries failed in %s:%d\n",
@@ -375,7 +193,7 @@ _h2_allocmatrix(size_t rows, size_t cols, const char *filename, int line)
     abort();
   }
 
-  ptr = (field *) h2_malloc(dsz);
+  ptr = (field *) malloc(dsz);
   if (ptr == NULL && dsz > 0) {
     (void) fprintf(stderr,
 		   "Matrix allocation with %lu rows and %lu columns failed in %s:%d\n",
@@ -391,22 +209,13 @@ void
 freemem(void *ptr)
 {
   if (ptr != NULL) {
-    h2_free(ptr);
+    free(ptr);
   }
 }
 
-size_t
-get_current_memory()
-{
-  fprintf(stderr, "Memory tracing not available!\n"
-	  "Please activate by setting TRACE_MEMORY compiler flag!\n");
-  return 0;
-}
-#endif
-
 /* ------------------------------------------------------------
- Sorting
- ------------------------------------------------------------ */
+ * Sorting
+ * ------------------------------------------------------------ */
 
 static void
 heap_down(uint root, uint n, bool leq(uint, uint, void *),

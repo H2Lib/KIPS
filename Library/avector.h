@@ -1,6 +1,6 @@
 
 /* ------------------------------------------------------------
- * This is the file "avector.h" of the H2Lib package.
+ * This is the file "avector.h" of the KIPS package.
  * All rights reserved, Steffen Boerm 2009
  * ------------------------------------------------------------ */
 
@@ -42,7 +42,7 @@ struct _avector {
   field *v;
 
   /** @brief Vector dimension. */
-  uint dim;
+  uint size;
 
   /** @brief Points to owner of coefficient storage if this is a subvector. */
   void *owner;
@@ -60,10 +60,10 @@ struct _avector {
  *  @remark Should always be matched by a call to @ref uninit_avector.
  *
  *  @param v Object to be initialized.
- *  @param dim Dimension of the new vector.
+ *  @param size Dimension of the new vector.
  *  @returns Initialized @ref avector object. */
 HEADER_PREFIX pavector
-init_avector(pavector v, uint dim);
+init_avector(pavector v, uint size);
 
 /** @brief Initialize an @ref avector object to represent a subvector.
  *
@@ -78,21 +78,11 @@ init_avector(pavector v, uint dim);
  *
  *  @param v Object to be initialized.
  *  @param src Source vector.
- *  @param dim Dimension of the new vector.
- *  @param off Offset in the source vector, should satisfy <tt>dim+off<=src->dim</tt>.
+ *  @param size Dimension of the new vector.
+ *  @param off Offset in the source vector, should satisfy <tt>size+off<=src->size</tt>.
  *  @returns Initialized @ref avector object. */
 HEADER_PREFIX pavector
-init_sub_avector(pavector v, pavector src, uint dim, uint off);
-
-/** @brief Initialize an @ref avector object and set it to zero
- * 
- * Sets up the components of the object, allocates storage for the
- * coefficient array, and dets it to zero.
- * @param v Object to be initialized.
- * @param dim Dimension of the vector.
- * @returns Initialized @ref avector object.*/
-HEADER_PREFIX pavector
-init_zero_avector(pavector v, uint dim);
+init_sub_avector(pavector v, pavector src, uint size, uint off);
 
 /** @brief Initialize an @ref avector object to represent a column vector
  *  of a given matrix.
@@ -112,22 +102,6 @@ init_zero_avector(pavector v, uint dim);
 HEADER_PREFIX pavector
 init_column_avector(pavector v, pamatrix src, uint col);
 
-/** @brief Initialize an @ref avector object using a given array for
- *  the coefficients.
- *
- *  Sets up the components of the object and uses the given array to
- *  represent the coefficients.
- *
- *  @remark Should always be matched by a call to @ref uninit_avector that
- *  will <em>not</em> release the coefficient storage.
- *
- *  @param v Object to be initialized.
- *  @param src Source array, should contain at least <tt>dim</tt> elements.
- *  @param dim Dimension of the new vector.
- *  @returns Initialized @ref avector object. */
-HEADER_PREFIX pavector
-init_pointer_avector(pavector v, pfield src, uint dim);
-
 /** @brief Uninitialize an @ref avector object.
  *
  *  Invalidates pointers, freeing corresponding storage if appropriate,
@@ -143,10 +117,10 @@ uninit_avector(pavector v);
  *
  *  @remark Should always be matched by a call to @ref del_avector.
  *
- *  @param dim Dimension of the new vector.
+ *  @param size Dimension of the new vector.
  *  @returns New @ref avector object. */
 HEADER_PREFIX pavector
-new_avector(uint dim);
+new_avector(uint size);
 
 /** @brief Create a new @ref avector object representing a subvector.
  *
@@ -160,32 +134,11 @@ new_avector(uint dim);
  *  will <em>not</em> release the coefficient storage.
  *
  *  @param src Source vector.
- *  @param dim Dimension of the new vector.
- *  @param off Offset in the source vector, should satisfy <tt>dim+off<=src->dim</tt>.
+ *  @param size Dimension of the new vector.
+ *  @param off Offset in the source vector, should satisfy <tt>size+off<=src->size</tt>.
  *  @returns New @ref avector object. */
 HEADER_PREFIX pavector
-new_sub_avector(pavector src, uint dim, uint off);
-
-/** @brief Create a new @ref avector object representing a zero vector.
- * 
- * Allocates storage for the object and sets all coefficients to 
- * zero.
- * 
- * @remark Should always be matched by a call to @ref del_avector.
- * 
- * @param dim Dimension of the new vector.
- * @returns New @ref amatrix object. */
-HEADER_PREFIX pavector
-new_zero_avector(uint dim);
-
-/** @brief Create a new @ref avector object using a given array for
- *  the coefficients.
- *
- *  @param src Source array, should contain at least <tt>dim</tt> elements.
- *  @param dim Dimension of the new vector.
- *  @returns New @ref avector object. */
-HEADER_PREFIX pavector
-new_pointer_avector(pfield src, uint dim);
+new_sub_avector(pavector src, uint size, uint off);
 
 /** @brief Delete an @ref avector object.
  *
@@ -205,22 +158,16 @@ del_avector(pavector v);
  *  Allocates new storage for the coefficients and releases the
  *  old storage.
  *
- *  @attention Make sure that there are no submatrix objects referring
+ *  The vector entries are not preserved.
+ *
+ *  @attention Make sure that there are no subvector objects referring
  *  to this object, since they will otherwise keep using pointers
  *  to invalid storage.
  *
  *  @param v Vector to be resized.
- *  @param dim New vector dimension. */
+ *  @param size New vector dimension. */
 HEADER_PREFIX void
-resize_avector(pavector v, uint dim);
-
-/** @brief Reduce the dimension of an @ref avector object without
- *  reallocating storage, preserving its coefficients.
- *
- *  @param v Vector to be resized.
- *  @param dim New vector dimension, not greater than <tt>v->dim</tt>. */
-HEADER_PREFIX void
-shrink_avector(pavector v, uint dim);
+resize_avector(pavector v, uint size);
 
 /* ------------------------------------------------------------
  * Access methods
@@ -240,9 +187,10 @@ addentry_avector(pavector, uint, field) __attribute__((unused));
  *  @param v Vector @f$v@f$.
  *  @param i Index @f$i@f$.
  *  @returns Vector entry @f$v_i@f$. */
-INLINE_PREFIX field getentry_avector(pcavector v, uint i) {
+INLINE_PREFIX field
+getentry_avector(pcavector v, uint i) {
 #ifdef FULL_DEBUG
-  assert(i < v->dim);
+  assert(i < v->size);
 #endif
   return v->v[i];
 }
@@ -252,9 +200,10 @@ INLINE_PREFIX field getentry_avector(pcavector v, uint i) {
  *  @param v Vector @f$v@f$.
  *  @param i Index @f$i@f$.
  *  @param x New value of @f$v_i@f$. */
-INLINE_PREFIX void setentry_avector(pavector v, uint i, field x) {
+INLINE_PREFIX void
+setentry_avector(pavector v, uint i, field x) {
 #ifdef FULL_DEBUG
-  assert(i < v->dim);
+  assert(i < v->size);
 #endif
 
   v->v[i] = x;
@@ -266,9 +215,10 @@ INLINE_PREFIX void setentry_avector(pavector v, uint i, field x) {
  *  @param i Index @f$i@f$.
  *  @param x Summand.
  *  @returns New value of @f$v_i@f$. */
-INLINE_PREFIX field addentry_avector(pavector v, uint i, field x) {
+INLINE_PREFIX field
+addentry_avector(pavector v, uint i, field x) {
 #ifdef FULL_DEBUG
-  assert(i < v->dim);
+  assert(i < v->size);
 #endif
 
   return (v->v[i] += x);
@@ -330,21 +280,15 @@ clear_avector(pavector v);
 /** @brief Set all coefficients in a vector to the same value.
  *
  *  @param v Target vector.
- *  @param x Fill value. */
+ *  @param alpha Fill value @f$\alpha@f$. */
 HEADER_PREFIX void
-fill_avector(pavector v, field x);
+fill_avector(field alpha, pavector v);
 
 /** @brief Fill a vector with random values.
  *
  *  @param v Target vector. */
 HEADER_PREFIX void
 random_avector(pavector v);
-
-/** @brief Fill a vector with real valued random values.
- *
- *  @param v Target vector. */
-HEADER_PREFIX void
-random_real_avector(pavector v);
 
 /** @brief Copy a vector into another vector, @f$w \gets v@f$.
  *

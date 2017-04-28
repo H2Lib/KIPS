@@ -1,6 +1,6 @@
 
 /* ------------------------------------------------------------
- * This is the file "amatrix.c" of the H2Lib package.
+ * This is the file "amatrix.c" of the KIPS package.
  * All rights reserved, Steffen Boerm 2009
  * ------------------------------------------------------------ */
 
@@ -19,132 +19,56 @@ static uint active_amatrix = 0;
  * ------------------------------------------------------------ */
 
 pamatrix
-init_amatrix(pamatrix a, uint rows, uint cols)
+init_amatrix(pamatrix A, uint rows, uint cols)
 {
-  assert(a != NULL);
+  assert(A != NULL);
 
-  a->a = (rows > 0 && cols > 0 ? allocmatrix(rows, cols) : NULL);
-  a->ld = rows;
-  a->rows = rows;
-  a->cols = cols;
-  a->owner = NULL;
+  A->a = (rows > 0 && cols > 0 ? allocmatrix(rows, cols) : NULL);
+  A->ld = rows;
+  A->rows = rows;
+  A->cols = cols;
+  A->owner = NULL;
 
 #ifdef USE_OPENMP
 #pragma omp atomic
 #endif
   active_amatrix++;
 
-  return a;
+  return A;
 }
 
 pamatrix
-init_sub_amatrix(pamatrix a, pamatrix src, uint rows, uint roff,
+init_sub_amatrix(pamatrix A, pamatrix src, uint rows, uint roff,
 		 uint cols, uint coff)
 {
   longindex ld = src->ld;
 
-  assert(a != NULL);
+  assert(A != NULL);
   assert(src != NULL);
   assert(roff + rows <= src->rows);
   assert(coff + cols <= src->cols);
 
-  a->a = src->a + roff + ld * coff;
-  a->ld = src->ld;
-  a->rows = rows;
-  a->cols = cols;
-  a->owner = src;
+  A->a = src->a + roff + ld * coff;
+  A->ld = src->ld;
+  A->rows = rows;
+  A->cols = cols;
+  A->owner = src;
 
 #ifdef USE_OPENMP
 #pragma omp atomic
 #endif
   active_amatrix++;
 
-  return a;
-}
-
-pamatrix
-init_vec_amatrix(pamatrix a, pavector src, uint rows, uint cols)
-{
-  assert(a != NULL);
-  assert(src != NULL);
-  assert(rows <= src->dim / cols);
-
-  a->a = src->v;
-  a->ld = rows;
-  a->rows = rows;
-  a->cols = cols;
-  a->owner = (pamatrix) src;
-
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
-  active_amatrix++;
-
-  return a;
-}
-
-pamatrix
-init_pointer_amatrix(pamatrix a, pfield src, uint rows, uint cols)
-{
-  assert(a != NULL);
-  assert(rows == 0 || cols == 0 || src != NULL);
-
-  a->a = src;
-  a->rows = rows;
-  a->ld = rows;
-  a->cols = rows;
-  a->owner = src;
-
-#ifdef USE_OPENMP
-#pragma omp atomic
-#endif
-  active_amatrix++;
-
-  return a;
-}
-
-pamatrix
-init_zero_amatrix(pamatrix a, uint rows, uint cols)
-{
-  longindex lda;
-  uint      i, j;
-
-  init_amatrix(a, rows, cols);
-  lda = a->ld;
-
-  for (j = 0; j < cols; j++)
-    for (i = 0; i < rows; i++)
-      a->a[i + j * lda] = 0.0;
-
-  return a;
-}
-
-pamatrix
-init_identity_amatrix(pamatrix a, uint rows, uint cols)
-{
-  longindex lda;
-  uint      i, j;
-
-  init_amatrix(a, rows, cols);
-  lda = a->ld;
-
-  for (j = 0; j < cols; j++)
-    for (i = 0; i < rows; i++)
-      a->a[i + j * lda] = 0.0;
-
-  for (i = 0; i < rows && i < cols; i++)
-    a->a[i + i * lda] = 1.0;
-
-  return a;
+  return A;
 }
 
 void
-uninit_amatrix(pamatrix a)
+uninit_amatrix(pamatrix A)
 {
-  assert(a != NULL);
+  assert(A != NULL);
 
-  if (!a->owner && a->a != NULL) {
-    freemem(a->a);
+  if (!A->owner && A->a != NULL) {
+    freemem(A->a);
   }
 
   assert(active_amatrix > 0);
@@ -158,122 +82,86 @@ uninit_amatrix(pamatrix a)
 pamatrix
 new_amatrix(uint rows, uint cols)
 {
-  pamatrix  a;
+  pamatrix  A;
 
-  a = (pamatrix) allocmem(sizeof(amatrix));
+  A = (pamatrix) allocmem(sizeof(amatrix));
 
-  init_amatrix(a, rows, cols);
+  init_amatrix(A, rows, cols);
 
-  return a;
+  return A;
 }
 
 pamatrix
 new_sub_amatrix(pamatrix src, uint rows, uint roff, uint cols, uint coff)
 {
-  pamatrix  a;
+  pamatrix  A;
 
-  a = (pamatrix) allocmem(sizeof(amatrix));
+  A = (pamatrix) allocmem(sizeof(amatrix));
 
-  init_sub_amatrix(a, src, rows, roff, cols, coff);
+  init_sub_amatrix(A, src, rows, roff, cols, coff);
 
-  return a;
-}
-
-pamatrix
-new_pointer_amatrix(field * src, uint rows, uint cols)
-{
-  pamatrix  a;
-
-  a = (pamatrix) allocmem(sizeof(amatrix));
-
-  init_pointer_amatrix(a, src, rows, cols);
-
-  return a;
-}
-
-pamatrix
-new_zero_amatrix(uint rows, uint cols)
-{
-  pamatrix  a;
-
-  a = (pamatrix) allocmem(sizeof(amatrix));
-
-  init_zero_amatrix(a, rows, cols);
-
-  return a;
-}
-
-pamatrix
-new_identity_amatrix(uint rows, uint cols)
-{
-  pamatrix  a;
-
-  a = (pamatrix) allocmem(sizeof(amatrix));
-
-  init_identity_amatrix(a, rows, cols);
-
-  return a;
+  return A;
 }
 
 void
-del_amatrix(pamatrix a)
+del_amatrix(pamatrix A)
 {
-  assert(a != NULL);
+  assert(A != NULL);
 
-  uninit_amatrix(a);
-  freemem(a);
+  uninit_amatrix(A);
+  freemem(A);
 }
 
 void
-resize_amatrix(pamatrix a, uint rows, uint cols)
+resize_amatrix(pamatrix A, uint rows, uint cols)
 {
-  assert(a != NULL);
-  assert(a->owner == NULL);
+  assert(A != NULL);
+  assert(A->owner == NULL);
 
-  if (rows != a->rows || cols != a->cols) {
-    if (a->a != NULL) {
-      freemem(a->a);
+  if (rows != A->rows || cols != A->cols) {
+    if (A->a != NULL) {
+      freemem(A->a);
     }
-    a->a = allocmatrix(rows, cols);
-    a->rows = rows;
-    a->cols = cols;
-    a->ld = rows;
+    A->a = allocmatrix(rows, cols);
+    A->rows = rows;
+    A->cols = cols;
+    A->ld = rows;
   }
 }
 
 void
-resizecopy_amatrix(pamatrix a, uint rows, uint cols)
+resizecopy_amatrix(pamatrix A, uint rows, uint cols)
 {
   pfield    new_a;
-  longindex lda, ldn;
+  longindex ldA, ldN;
   uint      i, j;
 
-  assert(a != NULL);
-  assert(a->owner == NULL);
+  assert(A != NULL);
+  assert(A->owner == NULL);
 
-  if (rows != a->rows || cols != a->cols) {
+  if (rows != A->rows || cols != A->cols) {
     new_a = allocmatrix(rows, cols);
-    lda = a->ld;
-    ldn = rows;
+    ldA = A->ld;
+    ldN = rows;
 
-    for (j = 0; j < cols && j < a->cols; j++) {
-      for (i = 0; i < rows && i < a->rows; i++)
-	new_a[i + j * ldn] = a->a[i + j * lda];
+    for (j = 0; j < cols && j < A->cols; j++) {
+      for (i = 0; i < rows && i < A->rows; i++)
+	new_a[i + j * ldN] = A->a[i + j * ldA];
       for (; i < rows; i++)
-	new_a[i + j * ldn] = 0.0;
+	new_a[i + j * ldN] = 0.0;
     }
     for (; j < cols; j++)
       for (i = 0; i < rows; i++)
-	new_a[i + j * ldn] = 0.0;
+	new_a[i + j * ldN] = 0.0;
 
-    if (a->a != NULL) {
-      freemem(a->a);
+    if (A->a != NULL) {
+      freemem(A->a);
     }
 
-    a->a = new_a;
-    a->rows = rows;
-    a->cols = cols;
-    a->ld = rows;
+    A->a = new_a;
+    A->rows = rows;
+    A->cols = cols;
+    A->ld = rows;
   }
 }
 
@@ -288,25 +176,25 @@ getactives_amatrix()
 }
 
 size_t
-getsize_amatrix(pcamatrix a)
+getsize_amatrix(pcamatrix A)
 {
   size_t    sz;
 
   sz = sizeof(amatrix);
-  if (a->owner == NULL)
-    sz += (size_t) sizeof(field) * a->rows * a->cols;
+  if (A->owner == NULL)
+    sz += (size_t) sizeof(field) * A->rows * A->cols;
 
   return sz;
 }
 
 size_t
-getsize_heap_amatrix(pcamatrix a)
+getsize_heap_amatrix(pcamatrix A)
 {
   size_t    sz;
 
   sz = 0;
-  if (a->owner == NULL)
-    sz += (size_t) sizeof(field) * a->rows * a->cols;
+  if (A->owner == NULL)
+    sz += (size_t) sizeof(field) * A->rows * A->cols;
 
   return sz;
 }
@@ -316,292 +204,268 @@ getsize_heap_amatrix(pcamatrix a)
  * ------------------------------------------------------------ */
 
 void
-clear_amatrix(pamatrix a)
+clear_amatrix(pamatrix A)
 {
-  uint      rows = a->rows;
-  longindex lda = a->ld;
+  uint      rows = A->rows;
+  longindex ldA = A->ld;
   uint      i, j;
 
-  for (j = 0; j < a->cols; j++)
+  for (j = 0; j < A->cols; j++)
     for (i = 0; i < rows; i++)
-      a->a[i + j * lda] = 0.0;
+      A->a[i + j * ldA] = 0.0;
 }
 
 void
-clear_lower_amatrix(pamatrix a, bool strict)
+clear_lower_amatrix(bool strict, pamatrix A)
 {
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  longindex lda = a->ld;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
+  longindex ldA = A->ld;
   uint      i, j;
 
   if (strict) {
     for (j = 0; j < cols; j++) {
       for (i = j + 1; i < rows; i++) {
-	a->a[i + j * lda] = 0.0;
+	A->a[i + j * ldA] = 0.0;
       }
     }
   }
   else {
     for (j = 0; j < cols; j++) {
       for (i = j; i < rows; i++) {
-	a->a[i + j * lda] = 0.0;
+	A->a[i + j * ldA] = 0.0;
       }
     }
   }
 }
 
 void
-clear_upper_amatrix(pamatrix a, bool strict)
+clear_upper_amatrix(bool strict, pamatrix A)
 {
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  longindex lda = a->ld;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
+  longindex ldA = A->ld;
   uint      i, j;
 
   if (strict) {
     for (j = 0; j < cols; j++) {
       for (i = 0; i < UINT_MIN(j, rows); i++) {
-	a->a[i + j * lda] = 0.0;
+	A->a[i + j * ldA] = 0.0;
       }
     }
   }
   else {
     for (j = 0; j < cols; j++) {
       for (i = 0; i <= UINT_MIN(j, rows - 1); i++) {
-	a->a[i + j * lda] = 0.0;
+	A->a[i + j * ldA] = 0.0;
       }
     }
   }
 }
 
 void
-identity_amatrix(pamatrix a)
+identity_amatrix(pamatrix A)
 {
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  longindex lda = a->ld;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
+  longindex ldA = A->ld;
   uint      i, j;
 
   for (j = 0; j < cols; j++) {
     for (i = 0; i < rows; i++) {
-      a->a[i + j * lda] = 0.0;
+      A->a[i + j * ldA] = 0.0;
     }
   }
 
   for (i = 0; i < cols && i < rows; i++) {
-    a->a[i + i * lda] = 1.0;
+    A->a[i + i * ldA] = 1.0;
   }
 }
 
 void
-random_amatrix(pamatrix a)
+random_amatrix(pamatrix A)
 {
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  longindex lda = a->ld;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
+  longindex ldA = A->ld;
 
   uint      i, j;
 
   for (j = 0; j < cols; j++) {
     for (i = 0; i < rows; i++) {
-      a->a[i + j * lda] = FIELD_RAND();
+      A->a[i + j * ldA] = FIELD_RAND();
     }
   }
 }
 
 void
-random_invertible_amatrix(pamatrix a, real alpha)
+random_invertible_amatrix(real alpha, pamatrix A)
 {
-  pfield    aa = a->a;
-  uint      rows = a->rows;
-  longindex lda = a->ld;
+  pfield    Aa = A->a;
+  uint      rows = A->rows;
+  longindex ldA = A->ld;
   real      sum;
   uint      i, j;
 
-  assert(rows == a->cols);
+  assert(rows == A->cols);
 
   for (j = 0; j < rows; j++) {
     for (i = 0; i < rows; i++) {
-      aa[i + j * lda] = FIELD_RAND();
+      Aa[i + j * ldA] = FIELD_RAND();
     }
-    aa[j + j * lda] = 0.0;
+    Aa[j + j * ldA] = 0.0;
   }
 
+  /* Ensure strict diagonal dominance if alpha > 1 */
   for (j = 0; j < rows; j++) {
     sum = 0.0;
     for (i = 0; i < rows; i++)
-      sum += ABS(aa[i + j * lda]);
-    aa[j + j * lda] = sum + alpha;
+      sum += ABS(Aa[i + j * ldA]);
+    Aa[j + j * ldA] = (sum == 0.0 ? alpha : alpha * sum);
   }
 }
 
 void
-random_selfadjoint_amatrix(pamatrix a)
+random_selfadjoint_amatrix(pamatrix A)
 {
-  pfield    aa = a->a;
-  uint      rows = a->rows;
-  longindex lda = a->ld;
+  pfield    Aa = A->a;
+  uint      rows = A->rows;
+  longindex ldA = A->ld;
   uint      i, j;
 
-  assert(rows == a->cols);
+  assert(rows == A->cols);
 
   for (j = 0; j < rows; j++) {
     for (i = 0; i < j; i++) {
-      aa[i + j * lda] = FIELD_RAND();
-      aa[j + i * lda] = CONJ(aa[i + j * lda]);
+      Aa[i + j * ldA] = FIELD_RAND();
+      Aa[j + i * ldA] = CONJ(Aa[i + j * ldA]);
     }
-    aa[j + j * lda] = REAL_RAND();
+    Aa[j + j * ldA] = REAL_RAND();
   }
 }
 
 void
-random_spd_amatrix(pamatrix a, real alpha)
+random_spd_amatrix(real alpha, pamatrix A)
 {
-  pfield    aa = a->a;
-  uint      rows = a->rows;
-  longindex lda = a->ld;
+  pfield    Aa = A->a;
+  uint      rows = A->rows;
+  longindex ldA = A->ld;
   real      sum;
   uint      i, j;
 
-  assert(rows == a->cols);
+  assert(rows == A->cols);
 
   for (j = 0; j < rows; j++) {
     for (i = 0; i < j; i++) {
-      aa[i + j * lda] = FIELD_RAND();
-      aa[j + i * lda] = CONJ(aa[i + j * lda]);
+      Aa[i + j * ldA] = FIELD_RAND();
+      Aa[j + i * ldA] = CONJ(Aa[i + j * ldA]);
     }
-    aa[j + j * lda] = 0.0;
+    Aa[j + j * ldA] = 0.0;
   }
 
+  /* Ensure strict diagonal dominance if alpha > 0 */
   for (j = 0; j < rows; j++) {
     sum = 0.0;
     for (i = 0; i < rows; i++)
-      sum += ABS(aa[i + j * lda]);
-    aa[j + j * lda] = sum + alpha;
+      sum += ABS(Aa[i + j * ldA]);
+    Aa[j + j * ldA] = (sum == 0.0 ? alpha : alpha * sum);
   }
 }
 
 void
-copy_amatrix(bool atrans, pcamatrix a, pamatrix b)
+copy_amatrix(bool transA, pcamatrix A, pamatrix B)
 {
-  if (atrans) {
-    assert(a->rows == b->cols);
-    assert(a->cols == b->rows);
+  if (transA) {
+    assert(A->rows == B->cols);
+    assert(A->cols == B->rows);
 
-    copy_sub_amatrix(true, a, b);
+    copy_sub_amatrix(true, A, B);
   }
   else {
-    assert(a->rows == b->rows);
-    assert(a->cols == b->cols);
+    assert(A->rows == B->rows);
+    assert(A->cols == B->cols);
 
-    copy_sub_amatrix(false, a, b);
-  }
-}
-
-void
-copy_colpiv_amatrix(bool atrans, pcamatrix a, const uint * colpiv, pamatrix b)
-{
-  pcfield   aa = a->a;
-  longindex lda = a->ld;
-  pfield    ba = b->a;
-  longindex ldb = b->ld;
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  uint      i, j, j1;
-
-  if (atrans) {
-    assert(b->rows == cols);
-    assert(b->cols == rows);
-
-    for (j = 0; j < cols; j++) {
-      j1 = colpiv[j];
-      assert(j1 < cols);
-
-      for (i = 0; i < rows; i++)
-	ba[j + i * ldb] = CONJ(aa[i + j1 * lda]);
-    }
-  }
-  else {
-    assert(b->rows == rows);
-    assert(b->cols == cols);
-
-    for (j = 0; j < cols; j++) {
-      j1 = colpiv[j];
-      assert(j1 < cols);
-
-      for (i = 0; i < rows; i++)
-	ba[i + j * ldb] = aa[i + j1 * lda];
-    }
+    copy_sub_amatrix(false, A, B);
   }
 }
 
 pamatrix
 clone_amatrix(pcamatrix src)
 {
-  pamatrix  trg;
+  pamatrix  A;
 
-  trg = new_amatrix(src->rows, src->cols);
-  copy_amatrix(false, src, trg);
+  A = new_amatrix(src->rows, src->cols);
+  copy_amatrix(false, src, A);
 
-  return trg;
+  return A;
 }
 
 void
-copy_sub_amatrix(bool atrans, pcamatrix a, pamatrix b)
+copy_sub_amatrix(bool transA, pcamatrix A, pamatrix B)
 {
-  longindex lda = a->ld;
-  longindex ldb = b->ld;
+  pcfield Aa = A->a;
+  pfield Ba = B->a;
+  longindex ldA = A->ld;
+  longindex ldB = B->ld;
   uint      i, j, rows, cols;
 
-  if (atrans) {
-    rows = UINT_MIN(a->cols, b->rows);
-    cols = UINT_MIN(a->rows, b->cols);
+  if (transA) {
+    rows = UINT_MIN(A->cols, B->rows);
+    cols = UINT_MIN(A->rows, B->cols);
 
     for (i = 0; i < rows; i++) {
       for (j = 0; j < cols; j++) {
-	b->a[i + j * ldb] = CONJ(a->a[j + i * lda]);
+	Ba[i + j * ldB] = CONJ(Aa[j + i * ldA]);
       }
     }
   }
   else {
-    rows = UINT_MIN(a->rows, b->rows);
-    cols = UINT_MIN(a->cols, b->cols);
+    rows = UINT_MIN(A->rows, B->rows);
+    cols = UINT_MIN(A->cols, B->cols);
 
     for (j = 0; j < cols; j++) {
       for (i = 0; i < rows; i++) {
-	b->a[i + j * ldb] = a->a[i + j * lda];
+	Ba[i + j * ldB] = Aa[i + j * ldA];
       }
     }
   }
 }
 
 void
-print_amatrix(pcamatrix a)
+print_amatrix(pcamatrix A)
 {
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  longindex lda = a->ld;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
+  longindex ldA = A->ld;
   uint      i, j;
 
-  (void) printf("amatrix(%u,%u,%u)\n", rows, cols, a->ld);
+  (void) printf("amatrix(%u,%u,%u)\n", rows, cols, A->ld);
   if (rows == 0 || cols == 0)
     return;
 
+#ifdef USE_COMPLEX
   for (i = 0; i < rows; i++) {
-    (void) printf("  (" FIELD_CS(+.5, e), FIELD_ARG(a->a[i]));
+    (void) printf("  (%f+%fi", REAL(A->a[i]), IMAG(A->a[i]));
     for (j = 1; j < cols; j++)
-      (void) printf(" | " FIELD_CS(+.5, e), FIELD_ARG(a->a[i + j * lda]));
+      (void) printf(" | %f+%fi", REAL(A->a[i+j*ldA]), IMAG(A->a[i+j*ldA]));
     (void) printf(")\n");
   }
+#else
+  for (i = 0; i < rows; i++) {
+    (void) printf("  (%f", A->a[i]);
+    for (j = 1; j < cols; j++)
+      (void) printf(" | %f", A->a[i+j*ldA]);
+    (void) printf(")\n");
+  }
+#endif
 }
 
 void
-print_matlab_amatrix(pcamatrix a)
+print_matlab_amatrix(pcamatrix A)
 {
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  longindex lda = a->ld;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
+  longindex ldA = A->ld;
   uint      i, j;
 
   if (rows == 0)
@@ -610,10 +474,17 @@ print_matlab_amatrix(pcamatrix a)
     if (cols == 0)
       (void) printf("  [ ]\n");
     else {
-      (void) printf("  [" FIELD_CS(.5, e), FIELD_ARG(a->a[0]));
+#ifdef USE_COMPLEX
+      (void) printf("  [%f+%fi", REAL(A->a[0]), IMAG(A->a[0]));
       for (j = 1; j < cols; j++)
-	(void) printf(" " FIELD_CS(.5, e), FIELD_ARG(a->a[j * lda]));
+	(void) printf(" %f+%fi", REAL(A->a[j*ldA]), IMAG(A->a[j*ldA]));
       (void) printf("]\n");
+#else
+      (void) printf("  [%f", A->a[0]);
+      for (j = 1; j < cols; j++)
+	(void) printf(" %f", A->a[j*ldA]);
+      (void) printf("]\n");
+#endif
     }
   }
   else {
@@ -624,47 +495,66 @@ print_matlab_amatrix(pcamatrix a)
       (void) printf(" ]\n");
     }
     else {
-      (void) printf("  [" FIELD_CS(.5, e), FIELD_ARG(a->a[0]));
+#ifdef USE_COMPLEX
+      (void) printf("  [%f+%fi", REAL(A->a[0]), IMAG(A->a[0]));
       for (j = 1; j < cols; j++)
-	(void) printf(" " FIELD_CS(.5, e), FIELD_ARG(a->a[j * lda]));
+	(void) printf(" %f+%fi", REAL(A->a[j*ldA]), IMAG(A->a[j*ldA]));
       (void) printf(" ;\n");
       for (i = 1; i < rows - 1; i++) {
-	(void) printf("  " FIELD_CS(.5, e), FIELD_ARG(a->a[i]));
+	(void) printf("  %f+%fi", REAL(A->a[i]), IMAG(A->a[i]));
 	for (j = 1; j < cols; j++)
-	  (void) printf(" " FIELD_CS(.5, e), FIELD_ARG(a->a[i + j * lda]));
+	  (void) printf(" %f+%fi", REAL(A->a[i+j*ldA]), IMAG(A->a[i+j*ldA]));
 	(void) printf(" ;\n");
       }
-      (void) printf("  " FIELD_CS(.5, e), FIELD_ARG(a->a[i]));
+      (void) printf("  %f+%fi", REAL(A->a[i]), IMAG(A->a[i]));
       for (j = 1; j < cols; j++)
-	(void) printf(" " FIELD_CS(.5, e), FIELD_ARG(a->a[i + j * lda]));
+	(void) printf(" %f+%fi", REAL(A->a[i+j*ldA]), IMAG(A->a[i+j*ldA]));
       (void) printf("]\n");
+#else
+      (void) printf("  [%f", A->a[0]);
+      for (j = 1; j < cols; j++)
+	(void) printf(" %f", A->a[j*ldA]);
+      (void) printf(" ;\n");
+      for (i = 1; i < rows - 1; i++) {
+	(void) printf("  %f", A->a[i]);
+	for (j = 1; j < cols; j++)
+	  (void) printf(" %f", A->a[i+j*ldA]);
+	(void) printf(" ;\n");
+      }
+      (void) printf("  %f", A->a[i]);
+      for (j = 1; j < cols; j++)
+	(void) printf(" %f", A->a[i+j*ldA]);
+      (void) printf("]\n");
+#endif
     }
   }
 }
 
 real
-check_ortho_amatrix(bool atrans, pcamatrix a)
+check_ortho_amatrix(bool transA, pcamatrix A)
 {
-  pamatrix  a2;
-  uint      rows = a->rows;
-  uint      cols = a->cols;
+  pamatrix  B;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
   real      norm, error;
 
   error = 0.0;
 
-  if (atrans) {
-    a2 = new_identity_amatrix(rows, rows);
-    addmul_amatrix(-1.0, false, a, true, a, a2);
-    norm = normfrob_amatrix(a2);
-    del_amatrix(a2);
+  if(transA) {
+    B = new_amatrix(rows, rows);
+    identity_amatrix(B);
+    addmul_amatrix(-1.0, false, A, true, A, B);
+    norm = normfrob_amatrix(B);
+    del_amatrix(B);
 
     error = REAL_MAX(error, norm);
   }
   else {
-    a2 = new_identity_amatrix(cols, cols);
-    addmul_amatrix(-1.0, true, a, false, a, a2);
-    norm = normfrob_amatrix(a2);
-    del_amatrix(a2);
+    B = new_amatrix(cols, cols);
+    identity_amatrix(B);
+    addmul_amatrix(-1.0, true, A, false, A, B);
+    norm = normfrob_amatrix(B);
+    del_amatrix(B);
 
     error = REAL_MAX(error, norm);
   }
@@ -676,560 +566,170 @@ check_ortho_amatrix(bool atrans, pcamatrix a)
  * Basic linear algebra
  * ------------------------------------------------------------ */
 
-#ifdef USE_BLAS
 void
-scale_amatrix(field alpha, pamatrix a)
+scale_amatrix(field alpha, pamatrix A)
 {
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  longindex lda = a->ld;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
+  longindex ldA = A->ld;
   uint      j;
 
-  for (j = 0; j < cols; j++) {
-    h2_scal(&rows, &alpha, a->a + j * lda, &u_one);
-  }
-
-}
-#else
-void
-scale_amatrix(field alpha, pamatrix a)
-{
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  longindex lda = a->ld;
-  uint      i, j;
-
-  for (j = 0; j < cols; j++) {
-    for (i = 0; i < rows; i++) {
-      a->a[i + j * lda] *= alpha;
-    }
-  }
-}
-#endif
-
-void
-conjugate_amatrix(pamatrix a)
-{
-#ifdef USE_COMPLEX
-  const uint rows = a->rows;
-  const uint cols = a->cols;
-  const longindex ld = a->ld;
-  field    *aa = a->a;
-
-  uint      i, j;
-
-  for (j = 0; j < cols; ++j) {
-    for (i = 0; i < rows; ++i) {
-      aa[i + j * ld] = CONJ(aa[i + j * ld]);
-    }
-  }
-#endif
+  for (j = 0; j < cols; j++)
+    scal(rows, alpha, A->a + j *ldA, 1);
 }
 
-#ifdef USE_BLAS
 field
-dotprod_amatrix(pcamatrix a, pcamatrix b)
+dotprod_amatrix(pcamatrix A, pcamatrix B)
 {
   field     sum;
-  uint      rows, cols;
-  longindex lda = a->ld;
-  longindex ldb = b->ld;
+  uint      rows = A->rows;
+  uint      cols = A->cols;
+  longindex ldA = A->ld;
+  longindex ldB = B->ld;
   uint      j;
 
-  rows = a->rows;
-  cols = a->cols;
-
-  assert(rows == b->rows);
-  assert(cols == b->cols);
+  assert(rows == B->rows);
+  assert(cols == B->cols);
 
   sum = 0.0;
-  for (j = 0; j < cols; j++) {
-    sum += h2_dot(&rows, a->a + j * lda, &u_one, b->a + j * ldb, &u_one);
-  }
+  for (j = 0; j < cols; j++)
+    sum += dot(rows, A->a + j * ldA, 1, B->a + j * ldB, 1);
 
   return sum;
 }
-#else
-field
-dotprod_amatrix(pcamatrix a, pcamatrix b)
-{
-  field     sum;
-  uint      rows, cols;
-  longindex lda = a->ld;
-  longindex ldb = b->ld;
-  uint      i, j;
-
-  rows = a->rows;
-  cols = a->cols;
-
-  assert(rows == b->rows);
-  assert(cols == b->cols);
-
-  sum = 0.0;
-  for (j = 0; j < cols; j++) {
-    for (i = 0; i < rows; i++) {
-      sum += CONJ(a->a[i + j * lda]) * b->a[i + j * ldb];
-    }
-  }
-
-  return sum;
-}
-#endif
 
 real
 norm2_amatrix(pcamatrix A)
 {
-  return norm2_matrix((mvm_t) mvm_amatrix_avector, (void *) A, A->rows,
-		      A->cols);
+  return 0.0;
 }
 
-#ifdef USE_BLAS
 real
-normfrob_amatrix(pcamatrix a)
+normfrob_amatrix(pcamatrix A)
 {
   real      sum;
-  longindex lda = a->ld;
+  longindex ldA = A->ld;
   uint      j;
 
   sum = 0.0;
-  for (j = 0; j < a->cols; j++) {
-    sum += REAL_SQR(h2_nrm2(&a->rows, a->a + j * lda, &u_one));
-  }
+  for (j = 0; j < A->cols; j++)
+    sum += REAL_SQR(nrm2(A->rows, A->a + j * ldA, 1));
 
   return REAL_SQRT(sum);
 }
-#else
-real
-normfrob_amatrix(pcamatrix a)
-{
-  real      sum;
-  longindex lda = a->ld;
-  uint      i, j;
-
-  sum = 0.0;
-  for (j = 0; j < a->cols; j++) {
-    for (i = 0; i < a->rows; i++) {
-      sum += ABSSQR(a->a[i + j * lda]);
-    }
-  }
-
-  return REAL_SQRT(sum);
-}
-#endif
-
-#ifdef USE_BLAS
-real
-normfrob2_amatrix(pcamatrix a)
-{
-  real      sum;
-  longindex lda = a->ld;
-  uint      j;
-
-  sum = 0.0;
-  for (j = 0; j < a->cols; j++) {
-    sum += h2_dot(&a->rows, a->a + j * lda, &u_one, a->a + j * lda, &u_one);
-  }
-
-  return sum;
-}
-#else
-real
-normfrob2_amatrix(pcamatrix a)
-{
-  real      sum;
-  longindex lda = a->ld;
-  uint      i, j;
-
-  sum = 0.0;
-  for (j = 0; j < a->cols; j++) {
-    for (i = 0; i < a->rows; i++) {
-      sum += ABSSQR(a->a[i + j * lda]);
-    }
-  }
-
-  return sum;
-}
-#endif
 
 real
 norm2diff_amatrix(pcamatrix a, pcamatrix b)
 {
-  return norm2diff_matrix((mvm_t) mvm_amatrix_avector, (void *) a,
-			  (mvm_t) mvm_amatrix_avector, (void *) b, a->rows,
-			  a->cols);
-}
-
-#ifdef USE_BLAS
-void
-addeval_amatrix_avector(field alpha, pcamatrix a, pcavector src, pavector trg)
-{
-  assert(src->dim >= a->cols);
-  assert(trg->dim >= a->rows);
-
-  if (a->rows > 0 && a->cols > 0) {
-    h2_gemv(_h2_ntrans, &a->rows, &a->cols, &alpha, a->a, &a->ld, src->v,
-	    &u_one, &f_one, trg->v, &u_one);
-  }
+  return 0.0;
 }
 
 void
-addevaltrans_amatrix_avector(field alpha, pcamatrix a, pcavector src,
-			     pavector trg)
+addeval_amatrix(field alpha, pcamatrix A, pcavector x, pavector y)
 {
-  assert(src->dim >= a->rows);
-  assert(trg->dim >= a->cols);
+  assert(x->size == A->cols);
+  assert(y->size == A->rows);
 
-  if (a->rows > 0 && a->cols > 0) {
-    h2_gemv(_h2_adj, &a->rows, &a->cols, &alpha, a->a, &a->ld, src->v, &u_one,
-	    &f_one, trg->v, &u_one);
-  }
-}
-#else
-void
-addeval_amatrix_avector(field alpha, pcamatrix a, pcavector src, pavector trg)
-{
-  field     sum;
-  longindex lda = a->ld;
-  uint      i, j;
+  if(A->rows == 0 || A->cols == 0)
+    return;
 
-  assert(src->dim >= a->cols);
-  assert(trg->dim >= a->rows);
-
-  for (i = 0; i < a->rows; i++) {
-    sum = f_zero;
-    for (j = 0; j < a->cols; j++) {
-      sum += a->a[i + j * lda] * src->v[j];
-    }
-    trg->v[i] += alpha * sum;
-  }
+  gemv(false, A->rows, A->cols, alpha, A->a, A->ld,
+       x->v, 1, 1.0, y->v, 1);
 }
 
 void
-addevaltrans_amatrix_avector(field alpha, pcamatrix a, pcavector src,
-			     pavector trg)
+addevaltrans_amatrix(field alpha, pcamatrix A, pcavector x, pavector y)
 {
-  field     sum;
-  longindex lda = a->ld;
-  uint      i, j;
+  assert(x->size == A->rows);
+  assert(y->size == A->cols);
 
-  assert(src->dim >= a->rows);
-  assert(trg->dim >= a->cols);
+  if(A->rows == 0 || A->cols == 0)
+    return;
 
-  for (j = 0; j < a->cols; j++) {
-    sum = f_zero;
-    for (i = 0; i < a->rows; i++) {
-      sum += CONJ(a->a[i + j * lda]) * src->v[i];
-    }
-    trg->v[j] += alpha * sum;
-  }
+  gemv(true, A->rows, A->cols, alpha, A->a, A->ld,
+       x->v, 1, 1.0, y->v, 1);
 }
-#endif
 
 void
-mvm_amatrix_avector(field alpha, bool atrans, pcamatrix a, pcavector src,
-		    pavector trg)
+mvm_amatrix(field alpha, bool transA, pcamatrix A,
+	    pcavector x, pavector y)
 {
-  if (atrans)
-    addevaltrans_amatrix_avector(alpha, a, src, trg);
+  if(transA)
+    addevaltrans_amatrix(alpha, A, x, y);
   else
-    addeval_amatrix_avector(alpha, a, src, trg);
+    addeval_amatrix(alpha, A, x, y);
 }
 
-#ifdef USE_BLAS
 void
-add_amatrix(field alpha, bool atrans, pcamatrix a, pamatrix b)
+add_amatrix(field alpha, bool transA, pcamatrix A, pamatrix B)
 {
-  longindex lda = a->ld;
-  longindex ldb = b->ld;
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  uint      i;
+  uint rows = B->rows;
+  uint cols = B->cols;
+  longindex ldA = A->ld;
+  longindex ldB = B->ld;
+  int j;
 
-  if (atrans) {
-    assert(rows <= b->cols);
-    assert(cols <= b->rows);
+  if(transA) {
+    assert(rows == A->cols);
+    assert(cols == A->rows);
 
-    for (i = 0; i < cols; ++i) {
-      h2_gerc(&u_one, &rows, &alpha, &f_one, &u_one, a->a + i * lda, &u_one,
-	      b->a + i, &b->ld);
-    }
+    for(j=0; j<A->cols; j++)
+      gemv(true, cols, rows, alpha, A->a+j*ldA, ldA, &f_one, 1, 1.0, B->a+j, ldB);
   }
   else {
-    assert(rows <= b->rows);
-    assert(cols <= b->cols);
+    assert(rows == A->rows);
+    assert(cols == A->cols);
 
-    for (i = 0; i < cols; i++) {
-      h2_axpy(&rows, &alpha, a->a + i * lda, &u_one, b->a + i * ldb, &u_one);
-    }
+    for(j=0; j<A->cols; j++)
+      axpy(rows, alpha, A->a+j*ldA, 1, B->a+j*ldB, 1);
   }
 }
-#else
+
 void
-add_amatrix(field alpha, bool atrans, pcamatrix a, pamatrix b)
+addmul_amatrix(field alpha, bool transA, pcamatrix A,
+	       bool transB, pcamatrix B, pamatrix C)
 {
-  longindex lda = a->ld;
-  longindex ldb = b->ld;
-  uint      rows = a->rows;
-  uint      cols = a->cols;
-  uint      i, j;
-
-  if (atrans) {
-    assert(rows <= b->cols);
-    assert(cols <= b->rows);
-
-    for (i = 0; i < rows; i++) {
-      for (j = 0; j < cols; j++) {
-	b->a[j + i * ldb] += alpha * CONJ(a->a[i + j * lda]);
-      }
-    }
-  }
-  else {
-    assert(rows <= b->rows);
-    assert(cols <= b->cols);
-
-    for (j = 0; j < cols; j++) {
-      for (i = 0; i < rows; i++) {
-	b->a[i + j * ldb] += alpha * a->a[i + j * lda];
-      }
-    }
-  }
-}
-#endif
-
-#ifdef USE_BLAS
-void
-addmul_amatrix(field alpha, bool atrans, pcamatrix a, bool btrans,
-	       pcamatrix b, pamatrix c)
-{
-
-  if (a->rows == 0 || a->cols == 0 || b->rows == 0 || b->cols == 0) {
+  if (A->rows == 0 || A->cols == 0 || B->rows == 0 || B->cols == 0)
     return;
-  }
 
-  if (atrans) {
-    if (btrans) {
-      assert(a->cols <= c->rows);
-      assert(b->rows <= c->cols);
-      assert(a->rows == b->cols);
+  if (transA) {
+    if (transB) {
+      /* C += alpha A^* B^* */
+      assert(A->cols == C->rows);
+      assert(B->rows == C->cols);
+      assert(A->rows == B->cols);
 
-      h2_gemm(_h2_adj, _h2_adj, &a->cols, &b->rows, &a->rows, &alpha, a->a,
-	      &a->ld, b->a, &b->ld, &f_one, c->a, &c->ld);
+      gemm(transA, transB, A->cols, B->rows, A->rows,
+	   alpha, A->a, A->ld, B->a, B->ld, 1.0, C->a, C->ld);
     }
     else {
-      assert(a->cols <= c->rows);
-      assert(b->cols <= c->cols);
-      assert(a->rows == b->rows);
+      /* C += alpha A^* B */
+      assert(A->cols == C->rows);
+      assert(B->cols == C->cols);
+      assert(A->rows == B->rows);
 
-      h2_gemm(_h2_adj, _h2_ntrans, &a->cols, &b->cols, &a->rows, &alpha, a->a,
-	      &a->ld, b->a, &b->ld, &f_one, c->a, &c->ld);
+      gemm(transA, transB, A->cols, B->cols, A->rows,
+	   alpha, A->a, A->ld, B->a, B->ld, 1.0, C->a, C->ld);
     }
   }
   else {
-    if (btrans) {
-      assert(a->rows <= c->rows);
-      assert(b->rows <= c->cols);
-      assert(a->cols == b->cols);
+    if (transB) {
+      /* C += alpha A B^* */
+      assert(A->rows == C->rows);
+      assert(B->rows == C->cols);
+      assert(A->cols == B->cols);
 
-      h2_gemm(_h2_ntrans, _h2_adj, &a->rows, &b->rows, &a->cols, &alpha, a->a,
-	      &a->ld, b->a, &b->ld, &f_one, c->a, &c->ld);
+      gemm(transA, transB, A->rows, B->rows, A->cols,
+	   alpha, A->a, A->ld, B->a, B->ld, 1.0, C->a, C->ld);
     }
     else {
-      assert(a->rows <= c->rows);
-      assert(b->cols <= c->cols);
-      assert(a->cols == b->rows);
+      /* C += alpha A B */
+      assert(A->rows == C->rows);
+      assert(B->cols == C->cols);
+      assert(A->cols == B->rows);
 
-      h2_gemm(_h2_ntrans, _h2_ntrans, &a->rows, &b->cols, &a->cols, &alpha,
-	      a->a, &a->ld, b->a, &b->ld, &f_one, c->a, &c->ld);
+      gemm(transA, transB, A->rows, B->cols, A->cols,
+	   alpha, A->a, A->ld, B->a, B->ld, 1.0, C->a, C->ld);
     }
   }
 }
-#else
-void
-addmul_amatrix(field alpha, bool atrans, pcamatrix a, bool btrans,
-	       pcamatrix b, pamatrix c)
-{
-  uint      rows, cols, mid;
-  pcfield   aa = a->a;
-  pcfield   ba = b->a;
-  pfield    ca = c->a;
-  longindex lda = a->ld;
-  longindex ldb = b->ld;
-  longindex ldc = c->ld;
-  register uint i, j, k;
-
-  if (a->rows == 0 || a->cols == 0 || b->rows == 0 || b->cols == 0) {
-    return;
-  }
-
-  if (atrans) {
-    if (btrans) {
-      assert(a->cols <= c->rows);
-      assert(b->rows <= c->cols);
-      assert(a->rows == b->cols);
-
-      rows = a->cols;
-      mid = a->rows;
-      cols = b->rows;
-
-      for (i = 0; i < rows; i++) {
-	for (k = 0; k < cols; k++) {
-	  for (j = 0; j < mid; j++) {
-	    ca[i + k * ldc] += alpha
-	      * CONJ(aa[j + i * lda]) * CONJ(ba[k + j * ldb]);
-	  }
-	}
-      }
-    }
-    else {
-      assert(a->cols <= c->rows);
-      assert(b->cols <= c->cols);
-      assert(a->rows == b->rows);
-
-      rows = a->cols;
-      mid = a->rows;
-      cols = b->cols;
-
-      for (k = 0; k < cols; k++) {
-	for (i = 0; i < rows; i++) {
-	  for (j = 0; j < mid; j++) {
-	    ca[i + k * ldc] +=
-	      alpha * CONJ(aa[j + i * lda]) * ba[j + k * ldb];
-	  }
-	}
-      }
-    }
-  }
-  else {
-    if (btrans) {
-      assert(a->rows <= c->rows);
-      assert(b->rows <= c->cols);
-      assert(a->cols == b->cols);
-
-      rows = a->rows;
-      mid = a->cols;
-      cols = b->rows;
-
-      for (j = 0; j < mid; j++) {
-	for (k = 0; k < cols; k++) {
-	  for (i = 0; i < rows; i++) {
-	    ca[i + k * ldc] +=
-	      alpha * aa[i + j * lda] * CONJ(ba[k + j * ldb]);
-	  }
-	}
-      }
-    }
-    else {
-      assert(a->rows <= c->rows);
-      assert(b->cols <= c->cols);
-      assert(a->cols == b->rows);
-
-      rows = a->rows;
-      mid = a->cols;
-      cols = b->cols;
-
-      for (k = 0; k < cols; k++) {
-	for (j = 0; j < mid; j++) {
-	  for (i = 0; i < rows; i++) {
-	    ca[i + k * ldc] += alpha * aa[i + j * lda] * ba[j + k * ldb];
-	  }
-	}
-      }
-    }
-  }
-}
-#endif
-
-#ifdef USE_BLAS
-void
-bidiagmul_amatrix(field alpha, bool atrans, pamatrix a, pcavector d,
-		  pcavector l)
-{
-  field     beta, gamma;
-  longindex lda = a->ld;
-  uint      j;
-
-  if (atrans) {
-    assert(a->rows == d->dim);
-    assert(l->dim + 1 == d->dim);
-
-    if (a->rows < 1 || a->cols < 1) {
-      return;
-    }
-
-    for (j = 0; j + 1 < a->rows; j++) {
-      gamma = CONJ(alpha * d->v[j]);
-      h2_scal(&a->cols, &gamma, a->a + j, &a->ld);
-      beta = CONJ(alpha * l->v[j]);
-      h2_axpy(&a->cols, &beta, a->a + (j + 1), &a->ld, a->a + j, &a->ld);
-    }
-    gamma = CONJ(alpha * d->v[j]);
-    h2_scal(&a->cols, &gamma, a->a + j, &a->ld);
-  }
-  else {
-    assert(a->cols == d->dim);
-    assert(l->dim + 1 == d->dim);
-
-    if (a->rows < 1 || a->cols < 1) {
-      return;
-    }
-
-    for (j = 0; j + 1 < a->cols; j++) {
-      gamma = alpha * d->v[j];
-      h2_scal(&a->rows, &gamma, a->a + j * lda, &u_one);
-      beta = alpha * l->v[j];
-      h2_axpy(&a->rows, &beta, a->a + (j + 1) * lda, &u_one, a->a + j * lda,
-	      &u_one);
-    }
-    gamma = alpha * d->v[j];
-    h2_scal(&a->rows, &gamma, a->a + j * lda, &u_one);
-  }
-}
-#else
-void
-bidiagmul_amatrix(field alpha, bool atrans, pamatrix a, pcavector d,
-		  pcavector l)
-{
-  field     beta, gamma;
-  longindex lda = a->ld;
-  uint      i, j;
-
-  if (atrans) {
-    assert(a->rows == d->dim);
-    assert(l->dim + 1 == d->dim);
-
-    if (a->rows < 1 || a->cols < 1) {
-      return;
-    }
-
-    for (j = 0; j + 1 < a->rows; j++) {
-      gamma = CONJ(alpha * d->v[j]);
-      beta = CONJ(alpha * l->v[j]);
-      for (i = 0; i < a->cols; i++)
-	a->a[j + i * lda] = gamma * a->a[j + i * lda]
-	  + beta * a->a[(j + 1) + i * lda];
-    }
-    gamma = CONJ(alpha * d->v[j]);
-    for (i = 0; i < a->cols; i++)
-      a->a[j + i * lda] *= gamma;
-  }
-  else {
-    assert(a->cols == d->dim);
-    assert(l->dim + 1 == d->dim);
-
-    if (a->rows < 1 || a->cols < 1) {
-      return;
-    }
-
-    for (j = 0; j + 1 < a->cols; j++) {
-      gamma = alpha * d->v[j];
-      beta = alpha * l->v[j];
-      for (i = 0; i < a->rows; i++)
-	a->a[i + j * lda] = gamma * a->a[i + j * lda]
-	  + beta * a->a[i + (j + 1) * lda];
-    }
-    gamma = alpha * d->v[j];
-    for (i = 0; i < a->rows; i++)
-      a->a[i + j * lda] *= gamma;
-  }
-}
-#endif
