@@ -39,7 +39,7 @@ USE_OPENCL=1
 
 # Use NetCDF for writing and reading numerical data
 # (currently works only if USE_COMPLEX is not set)
-USE_NETCDF=1
+#USE_NETCDF=1
 
 # Use zlib for compressing data files
 USE_ZLIB=1
