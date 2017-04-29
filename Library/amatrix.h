@@ -35,7 +35,6 @@ typedef const amatrix *pcamatrix;
 #include "basic.h"
 #include "settings.h"
 #include "avector.h"
-#include "realavector.h"
 
 /** @brief Representation of a matrix as an array in column-major order. */
 struct _amatrix {
