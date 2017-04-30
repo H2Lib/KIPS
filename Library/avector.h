@@ -314,6 +314,13 @@ copy_avector(pcavector v, pavector w);
 HEADER_PREFIX void
 copy_sub_avector(pcavector v, pavector w);
 
+/** @brief Create a duplicate of an existing @ref avector.
+ *
+ *  @param src Source vector.
+ *  @returns Copy of <tt>src</tt>. */
+HEADER_PREFIX pavector
+clone_avector(pcavector src);
+
 /** @brief Print a vector.
  *
  *  @param v Vector @f$v@f$. */

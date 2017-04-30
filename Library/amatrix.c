@@ -601,7 +601,32 @@ dotprod_amatrix(pcamatrix A, pcamatrix B)
 real
 norm2_amatrix(pcamatrix A)
 {
-  return 0.0;
+  avector tmp1, tmp2;
+  pavector x, y;
+  real norm;
+  uint i;
+
+  x = init_avector(&tmp1, A->cols);
+  y = init_avector(&tmp2, A->rows);
+
+  /* Apply power iteration to A^* A to estimate
+   * the spectral norm */
+  random_avector(x);
+  norm = norm2_avector(x);
+  for(i=0; i<NORM_STEPS && norm != 0.0; i++) {
+    clear_avector(y);
+    addeval_amatrix(1.0, A, x, y);
+
+    clear_avector(x);
+    addevaltrans_amatrix(1.0, A, y, x);
+
+    norm = norm2_avector(x);
+  }
+
+  uninit_avector(y);
+  uninit_avector(x);
+
+  return REAL_SQRT(norm);
 }
 
 real
@@ -619,9 +644,39 @@ normfrob_amatrix(pcamatrix A)
 }
 
 real
-norm2diff_amatrix(pcamatrix a, pcamatrix b)
+norm2diff_amatrix(pcamatrix A, pcamatrix B)
 {
-  return 0.0;
+  avector tmp1, tmp2;
+  pavector x, y;
+  real norm;
+  uint i;
+
+  assert(A->rows == B->rows);
+  assert(A->cols == B->cols);
+
+  x = init_avector(&tmp1, A->cols);
+  y = init_avector(&tmp2, A->rows);
+
+  /* Apply power iteration to (A-B)^* (A-B) to estimate
+   * the spectral norm */
+  random_avector(x);
+  norm = norm2_avector(x);
+  for(i=0; i<NORM_STEPS && norm != 0.0; i++) {
+    clear_avector(y);
+    addeval_amatrix(1.0, A, x, y);
+    addeval_amatrix(-1.0, B, x, y);
+
+    clear_avector(x);
+    addevaltrans_amatrix(1.0, A, y, x);
+    addevaltrans_amatrix(-1.0, B, y, x);
+
+    norm = norm2_avector(x);
+  }
+
+  uninit_avector(y);
+  uninit_avector(x);
+
+  return REAL_SQRT(norm);
 }
 
 void
@@ -674,14 +729,14 @@ add_amatrix(field alpha, bool transA, pcamatrix A, pamatrix B)
     assert(rows == A->cols);
     assert(cols == A->rows);
 
-    for(j=0; j<A->cols; j++)
-      gemv(true, cols, rows, alpha, A->a+j*ldA, ldA, &one, 1, 1.0, B->a+j, ldB);
+    for(j=0; j<cols; j++)
+      gemv(true, 1, rows, alpha, A->a+j, ldA, &one, 1, 1.0, B->a+j*ldB, 1);
   }
   else {
     assert(rows == A->rows);
     assert(cols == A->cols);
 
-    for(j=0; j<A->cols; j++)
+    for(j=0; j<cols; j++)
       axpy(rows, alpha, A->a+j*ldA, 1, B->a+j*ldB, 1);
   }
 }

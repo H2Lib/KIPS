@@ -222,6 +222,17 @@ copy_sub_avector(pcavector v, pavector w)
     w->v[i] = v->v[i];
 }
 
+pavector
+clone_avector(pcavector src)
+{
+  pavector x;
+
+  x = new_avector(src->size);
+  copy_avector(src, x);
+
+  return x;
+}
+
 void
 print_avector(pcavector v)
 {
