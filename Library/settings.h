@@ -48,6 +48,14 @@
 #endif
 
 /* ------------------------------------------------------------
+ * Approximation of the spectral norm
+ * ------------------------------------------------------------ */
+
+/** @brief Number of steps of the power iteration used to
+ *  approximate the spectral norm. */
+#define NORM_STEPS 20
+
+/* ------------------------------------------------------------
  * Types
  * ------------------------------------------------------------ */
 
@@ -56,18 +64,6 @@
  *  This type is mostly used to access components of arrays,
  *  vectors and matrices. */
 typedef uint32_t uint;
-
-/** @brief Signed integer constant zero. */
-extern const int i_zero;
-
-/** @brief Signed integer constant one. */
-extern const int i_one;
-
-/** @brief Unsigned integer constant zero. */
-extern const uint u_zero;
-
-/** @brief Unsigned integer constant one. */
-extern const uint u_one;
 
 /** @brief Unsigned long type.
  *
@@ -87,16 +83,16 @@ typedef double real;
 
 /** Relative tolerance for run-time checks. */
 #ifdef USE_FLOAT
-#define H2_CHECK_TOLERANCE 1.0e-6
+#define KIPS_CHECK_TOLERANCE 1.0e-6
 #else
-#define H2_CHECK_TOLERANCE 1.0e-12
+#define KIPS_CHECK_TOLERANCE 1.0e-12
 #endif
 
 /** Bound for determining when a number is essentially zero. */
 #ifdef USE_FLOAT
-#define H2_ALMOST_ZERO 1e-30
+#define KIPS_ALMOST_ZERO 1e-30
 #else
-#define H2_ALMOST_ZERO 1e-300
+#define KIPS_ALMOST_ZERO 1e-300
 #endif
 
 /** @brief Pointer to @ref real array. */
@@ -104,15 +100,6 @@ typedef real *preal;
 
 /** @brief Pointer to constant @ref real array. */
 typedef const real *pcreal;
-
-/** @brief @ref real constant zero */
-extern const real r_zero;
-
-/** @brief @ref real constant one. */
-extern const real r_one;
-
-/** @brief @ref real constant minus one. */
-extern const real r_minusone;
 
 /** @brief Field type.
  *
@@ -137,27 +124,6 @@ typedef field *pfield;
 
 /** @brief Pointer to constant @ref field array. */
 typedef const field *pcfield;
-
-/** @brief @ref field constant zero */
-extern const field f_zero;
-
-/** @brief @ref field constant one. */
-extern const field f_one;
-
-/** @brief @ref field constant minus one. */
-extern const field f_minusone;
-
-#ifdef USE_COMPLEX
-/** @brief @ref field constant for the imaginary number. */
-extern const field f_i;
-#endif
-
-#ifndef USE_COMPLEX
-#  ifdef I
-#  undef I
-#  endif
-#define I 0.0
-#endif
 
 /** @} */
 

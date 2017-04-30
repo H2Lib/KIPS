@@ -311,7 +311,7 @@ INLINE_PREFIX real _h2_realrand();
  *  @param x Input value
  */
 INLINE_PREFIX real _h2_rsqrt(real x) {
-  return r_one / REAL_SQRT(x);
+  return 1.0 / REAL_SQRT(x);
 }
 
 /** @brief Compute the square of the absolute value @f$|x|^2@f$ of a field element @f$x@f$.
@@ -340,7 +340,7 @@ INLINE_PREFIX real _h2_abssqr(field x) {
 INLINE_PREFIX field _h2_sgn1(field x) {
   real norm, rx, ix;
 
-  if (ABSSQR(x) <= H2_ALMOST_ZERO) {
+  if (ABSSQR(x) <= KIPS_ALMOST_ZERO) {
     return 1.0;
   } else {
     rx = REAL(x);
@@ -351,7 +351,7 @@ INLINE_PREFIX field _h2_sgn1(field x) {
 }
 #else
 INLINE_PREFIX field _h2_sgn1(field x) {
-  return (x < f_zero ? f_minusone : f_one);
+  return (x < 0.0 ? -1.0 : 1.0);
 }
 #endif
 
