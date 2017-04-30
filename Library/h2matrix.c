@@ -868,15 +868,70 @@ addevalsymm_h2matrix(field alpha, pch2matrix h2,
  * ------------------------------------------------------------ */
 
 real
-norm2_h2matrix(pch2matrix H2)
+norm2_h2matrix(pch2matrix G)
 {
-  return 0.0;
+  avector tmp1, tmp2;
+  pavector x, y;
+  real norm;
+  uint i;
+
+  x = init_avector(&tmp1, getcols_h2matrix(G));
+  y = init_avector(&tmp2, getrows_h2matrix(G));
+
+  /* Apply power iteration to G^* G to estimate
+   * the spectral norm */
+  random_avector(x);
+  norm = norm2_avector(x);
+  for(i=0; i<NORM_STEPS && norm != 0.0; i++) {
+    clear_avector(y);
+    addeval_h2matrix(1.0, G, x, y);
+
+    clear_avector(x);
+    addevaltrans_h2matrix(1.0, G, y, x);
+
+    norm = norm2_avector(x);
+  }
+  
+  uninit_avector(y);
+  uninit_avector(x);
+
+  return REAL_SQRT(norm);
 }
 
 real
-norm2diff_h2matrix(pch2matrix a, pch2matrix b)
+norm2diff_h2matrix(pch2matrix G, pch2matrix H)
 {
-  return 0.0;
+  avector tmp1, tmp2;
+  pavector x, y;
+  real norm;
+  uint i;
+
+  assert(getrows_h2matrix(G) == getrows_h2matrix(H));
+  assert(getcols_h2matrix(G) == getcols_h2matrix(H));
+
+  x = init_avector(&tmp1, getcols_h2matrix(G));
+  y = init_avector(&tmp2, getrows_h2matrix(G));
+
+  /* Apply power iteration to (G-H)^* (G-H) to estimate
+   * the spectral norm */
+  random_avector(x);
+  norm = norm2_avector(x);
+  for(i=0; i<NORM_STEPS && norm != 0.0; i++) {
+    clear_avector(y);
+    addeval_h2matrix(1.0, G, x, y);
+    addeval_h2matrix(-1.0, H, x, y);
+
+    clear_avector(x);
+    addevaltrans_h2matrix(1.0, G, y, x);
+    addevaltrans_h2matrix(-1.0, H, y, x);
+
+    norm = norm2_avector(x);
+  }
+  
+  uninit_avector(y);
+  uninit_avector(x);
+
+  return REAL_SQRT(norm);
 }
 
 /* ------------------------------------------------------------
