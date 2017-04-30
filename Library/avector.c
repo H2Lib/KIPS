@@ -266,7 +266,7 @@ dotprod_avector(pcavector x, pcavector y)
 {
   assert(x->size == y->size);
 
-  return dot(x->size, x->v, 1, y->v, 1);
+  return dot(true, false, x->size, x->v, 1, y->v, 1);
 }
 
 void

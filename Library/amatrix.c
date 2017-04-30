@@ -593,7 +593,7 @@ dotprod_amatrix(pcamatrix A, pcamatrix B)
 
   sum = 0.0;
   for (j = 0; j < cols; j++)
-    sum += dot(rows, A->a + j * ldA, 1, B->a + j * ldB, 1);
+    sum += dot(true, false, rows, A->a + j * ldA, 1, B->a + j * ldB, 1);
 
   return sum;
 }
@@ -667,6 +667,7 @@ add_amatrix(field alpha, bool transA, pcamatrix A, pamatrix B)
   uint cols = B->cols;
   longindex ldA = A->ld;
   longindex ldB = B->ld;
+  const field one = 1.0;
   int j;
 
   if(transA) {
@@ -674,7 +675,7 @@ add_amatrix(field alpha, bool transA, pcamatrix A, pamatrix B)
     assert(cols == A->rows);
 
     for(j=0; j<A->cols; j++)
-      gemv(true, cols, rows, alpha, A->a+j*ldA, ldA, &f_one, 1, 1.0, B->a+j, ldB);
+      gemv(true, cols, rows, alpha, A->a+j*ldA, ldA, &one, 1, 1.0, B->a+j, ldB);
   }
   else {
     assert(rows == A->rows);

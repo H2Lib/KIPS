@@ -32,19 +32,50 @@ axpy(int n, field alpha, const field *x, int incx, field *y, int incy)
 }
 
 field
-dot(int n, const field *x, int incx, const field *y, int incy)
+dot(bool conjx, bool conjy, int n,
+    const field *x, int incx, const field *y, int incy)
 {
   field sum;
   int i;
 
   sum = 0.0;
 
-  if(incx == 1 && incy == 1)
-    for(i=0; i<n; i++)
-      sum += CONJ(x[i]) * y[i];
-  else
-    for(i=0; i<n; i++)
-      sum += CONJ(x[i*incx]) * y[i*incy];
+  if(incx == 1 && incy == 1) {
+    if(conjx) {
+      if(conjy)
+	for(i=0; i<n; i++)
+	  sum += CONJ(x[i]) * CONJ(y[i]);
+      else
+	for(i=0; i<n; i++)
+	  sum += CONJ(x[i]) * y[i];
+    }
+    else {
+      if(conjy)
+	for(i=0; i<n; i++)
+	  sum += x[i] * CONJ(y[i]);
+      else
+	for(i=0; i<n; i++)
+	  sum += x[i] * y[i];
+    }
+  }
+  else {
+    if(conjx) {
+      if(conjy)
+	for(i=0; i<n; i++)
+	  sum += CONJ(x[i*incx]) * CONJ(y[i*incx]);
+      else
+	for(i=0; i<n; i++)
+	  sum += CONJ(x[i*incx]) * y[i*incx];
+    }
+    else {
+      if(conjy)
+	for(i=0; i<n; i++)
+	  sum += x[i*incx] * CONJ(y[i*incx]);
+      else
+	for(i=0; i<n; i++)
+	  sum += x[i*incx] * y[i*incx];
+    }
+  }
 
   return sum;
 }
@@ -78,7 +109,7 @@ gemv(bool trans, int m, int n, field alpha, const field *A, int ldA,
       scal(n, beta, y, incy);
 
     for(j=0; j<n; j++)
-      y[j] += dot(m, A+j*ldA, 1, x, incx);
+      y[j] += dot(true, false, m, A+j*ldA, 1, x, incx);
   }
   else {
     if(beta != 1.0)
@@ -90,13 +121,19 @@ gemv(bool trans, int m, int n, field alpha, const field *A, int ldA,
 }
 
 void
-geru(int m, int n, field alpha, const field *x, int incx,
-     const field *y, int incy, field *A, int ldA)
+ger(bool conjy, int m, int n, field alpha, const field *x, int incx,
+    const field *y, int incy, field *A, int ldA)
 {
   int j;
 
-  for(j=0; j<n; j++)
-    axpy(m, y[j], x, 1, A+j*ldA, 1);
+  if(conjy) {
+    for(j=0; j<n; j++)
+      axpy(m, CONJ(y[j]), x, 1, A+j*ldA, 1);
+  }
+  else {
+    for(j=0; j<n; j++)
+      axpy(m, y[j], x, 1, A+j*ldA, 1);
+  }
 }
 
 void
@@ -105,7 +142,7 @@ gemm(bool transA, bool transB, int m, int n, int k, field alpha,
      field beta, field *C, int ldC)
 {
   field sum;
-  int i, j, k;
+  int i, j;
 
   if(transB) {
     if(transA) {
@@ -113,26 +150,17 @@ gemm(bool transA, bool transB, int m, int n, int k, field alpha,
 	if(beta != 1.0)
 	  scal(m, beta, C+j*ldC, 1);
 
-	for(i=0; i<m; i++) {
-	  sum = 0.0;
-	  for(l=0; l<k; l++)
-	    sum += A[l+i*ldA] * B[j+l*ldB];
-	  C[i+j*ldC] += alpha * CONJ(sum);
-	}
+	for(i=0; i<m; i++)
+	  C[i+j*ldC] += alpha * dot(true, true, k, A+i*ldA, 1, B+j, ldB);
       }
     }
     else {
-      for(j=0; j<n; j++) {
-	if(beta != 1.0)
+      if(beta != 1.0)
+	for(j=0; j<n; j++)
 	  scal(m, beta, C+j*ldC, 1);
 
-	for(i=0; i<m; i++) {
-	  sum = 0.0;
-	  for(l=0; l<k; l++)
-	    sum += A[i+l*ldA] * CONJ(B[j+l*ldB]);
-	  C[i+j*ldC] += alpha * sum;
-	}
-      }
+      for(j=0; j<k; j++)
+	ger(true, m, n, alpha, A+j*ldA, 1, B+j*ldB, 1, C, ldC);
     }
   }
   else {

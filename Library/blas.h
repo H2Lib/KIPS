@@ -10,15 +10,15 @@ scal(int n, field alpha, field *x, int incx) __attribute__((unused));
 INLINE_PREFIX void
 axpy(int n, field alpha, const field *x, int incx, field *y, int incy) __attribute__((unused));
 INLINE_PREFIX field
-dot(int n, const field *x, int incx, const field *y, int incy) __attribute__((unused));
+dot(bool conjx, bool conjy, int n, const field *x, int incx, const field *y, int incy) __attribute__((unused));
 INLINE_PREFIX field
 nrm2(int n, const field *x, int incx) __attribute__((unused));
 INLINE_PREFIX void
 gemv(bool trans, int m, int n, field alpha, const field *A, int ldA,
      const field *x, int incx, field beta, field *y, int incy) __attribute__((unused));
 INLINE_PREFIX void
-geru(int m, int n, field alpha, const field *x, int incx,
-     const field *y, int incy, field *A, int ldA) __attribute__((unused));
+ger(bool conjy, int m, int n, field alpha, const field *x, int incx,
+    const field *y, int incy, field *A, int ldA) __attribute__((unused));
 INLINE_PREFIX void
 gemm(bool transA, bool transB, int m, int n, int k, field alpha,
      const field *A, int ldA, const field *B, int ldB,
@@ -113,7 +113,7 @@ axpy(int n, field alpha, const field *x, int incx, field *y, int incy)
 
 #ifndef USE_BLAS
 HEADER_PREFIX field
-dot(int n, const field *x, int incx, const field *y, int incy);
+dot(bool conjx, bool conjy, int n, const field *x, int incx, const field *y, int incy);
 #else
 HEADER_PREFIX float
 sdot_(const int *n, const float *x, const int *incx, const float *y, const int *incy);
@@ -123,25 +123,47 @@ ddot_(const int *n, const double *x, const int *incx, const double *y, const int
 
 #ifdef USE_COMPLEX
 HEADER_PREFIX float complex
-cdot_(const int *n, const float complex *x, const int *incx, const float complex *y, const int *incy);
+cdotu_(const int *n, const float complex *x, const int *incx, const float complex *y, const int *incy);
+
+HEADER_PREFIX float complex
+cdotc_(const int *n, const float complex *x, const int *incx, const float complex *y, const int *incy);
 
 HEADER_PREFIX double complex
-zdot_(const int *n, const double complex *x, const int *incx, const double complex *y, const int *incy);
+zdotu_(const int *n, const double complex *x, const int *incx, const double complex *y, const int *incy);
+
+HEADER_PREFIX double complex
+zdotc_(const int *n, const double complex *x, const int *incx, const double complex *y, const int *incy);
 #endif
 
 INLINE_PREFIX field
-dot(int n, const field *x, int incx, const field *y, int incy)
+dot(bool conjx, bool conjy, int n, const field *x, int incx, const field *y, int incy)
 {
 #ifdef USE_FLOAT
 #ifdef USE_COMPLEX
-  return cdot_(&n, x, &incx, y, &incy);
+  return (conjx ?
+	  (conjy ?
+	   CONJ(cdotu_(&n, x, &incx, y, &incy)) :
+	   cdotc_(&n, x, &incx, y, &incy)) :
+	  (conjy ?
+	   cdotc_(&n, y, &incy, x, &incx) :
+	   cdotu_(&n, x, &incx, y, &incy)));
 #else
+  (void) conjx;
+  (void) conjy;
   return sdot_(&n, x, &incx, y, &incy);
 #endif
 #else
 #ifdef USE_COMPLEX
-  return zdot_(&n, x, &incx, y, &incy);
+  return (conjx ?
+	  (conjy ?
+	   CONJ(zdotu_(&n, x, &incx, y, &incy)) :
+	   zdotc_(&n, x, &incx, y, &incy)) :
+	  (conjy ?
+	   zdotc_(&n, y, &incy, x, &incx) :
+	   zdotu_(&n, x, &incx, y, &incy)));
 #else
+  (void) conjx;
+  (void) conjy;
   return ddot_(&n, x, &incx, y, &incy);
 #endif
 #endif
@@ -164,10 +186,10 @@ dnrm2_(const int *n, const double *x, const int *incx);
 
 #ifdef USE_COMPLEX
 HEADER_PREFIX float
-cnrm2_(const int *n, const float complex *x, const int *incx);
+scnrm2_(const int *n, const float complex *x, const int *incx);
 
 HEADER_PREFIX double
-znrm2_(const int *n, const double complex *x, const int *incx);
+dznrm2_(const int *n, const double complex *x, const int *incx);
 #endif
 
 INLINE_PREFIX field
@@ -175,13 +197,13 @@ nrm2(int n, const field *x, int incx)
 {
 #ifdef USE_FLOAT
 #ifdef USE_COMPLEX
-  return cnrm2_(&n, x, &incx);
+  return scnrm2_(&n, x, &incx);
 #else
   return snrm2_(&n, x, &incx);
 #endif
 #else
 #ifdef USE_COMPLEX
-  return znrm2_(&n, x, &incx);
+  return dznrm2_(&n, x, &incx);
 #else
   return dnrm2_(&n, x, &incx);
 #endif
@@ -254,8 +276,8 @@ gemv(bool trans, int m, int n, field alpha, const field *A, int ldA,
 
 #ifndef USE_BLAS
 HEADER_PREFIX void
-geru(int m, int n, field alpha, const field *x, int incx,
-     const field *y, int incy, field *A, int ldA);
+ger(bool conjy, int m, int n, field alpha, const field *x, int incx,
+    const field *y, int incy, field *A, int ldA);
 #else
 HEADER_PREFIX void
 sger_(const int *m, const int *n, const float *alpha,
@@ -274,25 +296,43 @@ cgeru_(const int *m, const int *n, const float complex *alpha,
        float complex *A, const int *ldA);
 
 HEADER_PREFIX void
+cgerc_(const int *m, const int *n, const float complex *alpha,
+       const float complex *x, const int *incx, const float complex *y, const int *incy,
+       float complex *A, const int *ldA);
+
+HEADER_PREFIX void
 zgeru_(const int *m, const int *n, const double complex *alpha,
+       const double complex *x, const int *incx, const double complex *y, const int *incy,
+       double complex *A, const int *ldA);
+
+HEADER_PREFIX void
+zgerc_(const int *m, const int *n, const double complex *alpha,
        const double complex *x, const int *incx, const double complex *y, const int *incy,
        double complex *A, const int *ldA);
 #endif
 
 INLINE_PREFIX void
-geru(int m, int n, field alpha, const field *x, int incx,
-     const field *y, int incy, field *A, int ldA)
+ger(bool conjy, int m, int n, field alpha, const field *x, int incx,
+    const field *y, int incy, field *A, int ldA)
 {
 #ifdef USE_FLOAT
 #ifdef USE_COMPLEX
-  cgeru_(&m, &n, &alpha, x, &incx, y, &incy, A, &ldA);
+  if(conjy)
+    cgerc_(&m, &n, &alpha, x, &incx, y, &incy, A, &ldA);
+  else
+    cgeru_(&m, &n, &alpha, x, &incx, y, &incy, A, &ldA);
 #else
+  (void) conjy;
   sger_(&m, &n, &alpha, x, &incx, y, &incy, A, &ldA);
 #endif
 #else
 #ifdef USE_COMPLEX
-  zgeru_(&m, &n, &alpha, x, &incx, y, &incy, A, &ldA);
+  if(conjy)
+    zgerc_(&m, &n, &alpha, x, &incx, y, &incy, A, &ldA);
+  else
+    zgeru_(&m, &n, &alpha, x, &incx, y, &incy, A, &ldA);
 #else
+  (void) conjy;
   dger_(&m, &n, &alpha, x, &incx, y, &incy, A, &ldA);
 #endif
 #endif

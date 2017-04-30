@@ -508,8 +508,8 @@ addeval_amatrix(field alpha, pcamatrix A,
  *  @param x Source vector @f$x@f$.
  *  @param y Target vector @f$y@f$. */
 HEADER_PREFIX void
-addevaltrans_amatrix_avector(field alpha, pcamatrix A,
-			     pcavector x, pavector y);
+addevaltrans_amatrix(field alpha, pcamatrix A,
+		     pcavector x, pavector y);
 
 /** @brief Multiply a matrix @f$A@f$ or its adjoint @f$A^*@f$ by a
  *  vector, @f$y \gets y + \alpha A x@f$ or @f$y \gets y + \alpha A^* x@f$.
@@ -524,8 +524,8 @@ addevaltrans_amatrix_avector(field alpha, pcamatrix A,
  *  @param x Source vector @f$x@f$.
  *  @param y Target vector @f$y@f$. */
 HEADER_PREFIX void
-mvm_amatrix_avector(field alpha, bool transA, pcamatrix a,
-		    pcavector x, pavector y);
+mvm_amatrix(field alpha, bool transA, pcamatrix a,
+	    pcavector x, pavector y);
 
 /** @brief Add two matrices,
  *  @f$B \gets B + \alpha A@f$ or @f$B \gets B + \alpha A^*@f$.
