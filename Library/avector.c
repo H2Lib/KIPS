@@ -1,6 +1,6 @@
 
 /* ------------------------------------------------------------
- * This is the file "avector.c" of the H2Lib package.
+ * This is the file "avector.c" of the KIPS package.
  * All rights reserved, Steffen Boerm 2009
  * ------------------------------------------------------------ */
 

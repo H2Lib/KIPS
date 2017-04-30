@@ -1,7 +1,8 @@
+
 /* ------------------------------------------------------------
- This is the file "parameters.c" of the H2Lib package.
- All rights reserved, Steffen Boerm 2009
- ------------------------------------------------------------ */
+ * This is the file "parameters.c" of the KIPS package.
+ * All rights reserved, Steffen Boerm 2009
+ * ------------------------------------------------------------ */
 
 #include "parameters.h"
 
@@ -70,13 +71,23 @@ askforreal(const char *question, const char *envname, real deflt)
   char     *env;
 
   env = getenv(envname);
-  if (env && sscanf(env, "%" SCANF_PREFIX "f", &res) == 1)
+#ifdef USE_FLOAT
+  if (env && sscanf(env, "%f", &res) == 1)
     return res;
+#else
+  if (env && sscanf(env, "%lf", &res) == 1)
+    return res;
+#endif
 
   (void) printf("%s (%.3e)\n", question, deflt);
   res = deflt;
+#ifdef USE_FLOAT
   if (fgets(buf, 80, stdin))
-    sscanf(buf, "%" SCANF_PREFIX "f", &res);
+    sscanf(buf, "%f", &res);
+#else
+  if (fgets(buf, 80, stdin))
+    sscanf(buf, "%lf", &res);
+#endif
 
   return res;
 }

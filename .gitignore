@@ -24,6 +24,7 @@
 *.dylib
 
 # Executables
+Tests/test_amatrix
 *.exe
 *.out
 *.app

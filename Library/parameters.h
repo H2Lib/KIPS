@@ -1,8 +1,8 @@
 
 /* ------------------------------------------------------------
-   This is the file "parameters.h" of the H2Lib package.
-   All rights reserved, Steffen Boerm 2009
-   ------------------------------------------------------------ */
+ * This is the file "parameters.h" of the KIPS package.
+ * All rights reserved, Steffen Boerm 2009
+ * ------------------------------------------------------------ */
 
 /** @file parameters.h
  *  @author Steffen B&ouml;rm

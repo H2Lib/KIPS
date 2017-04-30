@@ -1,8 +1,8 @@
 
 /* ------------------------------------------------------------
-   This is the file "cluster.h" of the H2Lib package.
-   All rights reserved, Steffen Boerm 2010
-   ------------------------------------------------------------ */
+ * This is the file "cluster.h" of the KIPS package.
+ * All rights reserved, Steffen Boerm 2010
+ * ------------------------------------------------------------ */
 
 #ifndef CLUSTER_H
 #define CLUSTER_H
@@ -67,47 +67,5 @@ getsize_cluster(pccluster t);
 
 HEADER_PREFIX uint
 getdepth_cluster(pccluster t);
-
-/* ------------------------------------------------------------
-   Hierarchical iterator
-   ------------------------------------------------------------ */
-
-HEADER_PREFIX void
-iterate_cluster(pccluster t, uint tname,
-		void (*pre)(pccluster t, uint tname, void *data),
-		void (*post)(pccluster t, uint tname, void *data),
-		void *data);
-
-HEADER_PREFIX void
-iterate_parallel_cluster(pccluster t, uint tname,
-			 uint pardepth,
-			 void (*pre)(pccluster t, uint tname, void *data),
-			 void (*post)(pccluster t, uint tname, void *data),
-			 void *data);
-
-/* ------------------------------------------------------------
-   Enumeration
-   ------------------------------------------------------------ */
-
-HEADER_PREFIX pcluster *
-enumerate_cluster(pcluster t);
-
-/* ------------------------------------------------------------
- * File I/O
- * ------------------------------------------------------------ */
-
-#ifdef USE_NETCDF
-HEADER_PREFIX void
-write_cdf_cluster(pccluster t, const char *name);
-
-HEADER_PREFIX void
-write_cdfpart_cluster(pccluster t, int nc_file, const char *prefix);
-
-HEADER_PREFIX pcluster
-read_cdf_cluster(const char *name);
-
-HEADER_PREFIX pcluster
-read_cdfpart_cluster(int nc_file, const char *prefix);
-#endif
 
 #endif

@@ -17,6 +17,7 @@ KIPS_CORE2 = \
 	Library/cluster.c \
 	Library/block.c \
 	Library/clusterbasis.c \
+	Library/clustergeometry.c \
 	Library/uniform.c \
 	Library/h2matrix.c
 

@@ -1,7 +1,8 @@
+
 /* ------------------------------------------------------------
- This is the file "basic.c" of the H2Lib package.
- All rights reserved, Steffen Boerm 2009
- ------------------------------------------------------------ */
+ * This is the file "basic.c" of the KIPS package.
+ * All rights reserved, Steffen Boerm 2009
+ * ------------------------------------------------------------ */
 
 #include "basic.h"
 
@@ -32,15 +33,9 @@
 #include <gtk/gtk.h>
 #endif
 
-int       max_pardepth = 0;
-
-#ifdef TRACE_MEMORY
-size_t    current_memory = 0;
-#endif
-
 /* ------------------------------------------------------------
- Set up the library
- ------------------------------------------------------------ */
+ * Set up the library
+ * ------------------------------------------------------------ */
 
 void
 init_h2lib(int *argc, char ***argv)
@@ -49,28 +44,11 @@ init_h2lib(int *argc, char ***argv)
   (void) argv;
 
 #ifdef USE_OPENMP
-  char     *env;
-  int       i, j;
-
   if (omp_in_parallel()) {
     fprintf(stderr, "Calling init_h2lib in parallel section is forbidden.\n");
     abort();
   }
   omp_set_nested(1);
-
-  i = omp_get_num_procs();
-  j = 0;
-  while (i > 1) {
-    i /= 2;
-    j++;
-  }
-  max_pardepth = j + 1;
-
-  env = getenv("H2_PARDEPTH");
-  if (env)
-    sscanf(env, "%d", &max_pardepth);
-#else
-  max_pardepth = 0;
 #endif
 
 #ifdef USE_FREEGLUT
@@ -90,10 +68,10 @@ uninit_h2lib()
 }
 
 /* ------------------------------------------------------------
- Memory management
- ------------------------------------------------------------ */
+ * Memory management
+ * ------------------------------------------------------------ */
 
-void     *
+void *
 _h2_allocmem(size_t sz, const char *filename, int line)
 {
   void     *ptr;
@@ -108,7 +86,7 @@ _h2_allocmem(size_t sz, const char *filename, int line)
   return ptr;
 }
 
-uint     *
+uint *
 _h2_allocuint(size_t sz, const char *filename, int line)
 {
   uint     *ptr;
@@ -132,7 +110,7 @@ _h2_allocuint(size_t sz, const char *filename, int line)
   return ptr;
 }
 
-real     *
+real *
 _h2_allocreal(size_t sz, const char *filename, int line)
 {
   real     *ptr;
@@ -266,8 +244,8 @@ _h2_heapsort(uint n, bool leq(uint, uint, void *),
 }
 
 /* ------------------------------------------------------------
- Timing
- ------------------------------------------------------------ */
+ * Timing
+ * ------------------------------------------------------------ */
 
 struct _stopwatch {
 #ifdef WIN32
@@ -337,8 +315,8 @@ stop_stopwatch(pstopwatch sw)
 }
 
 /* ------------------------------------------------------------
- Drawing
- ------------------------------------------------------------ */
+ * Drawing
+ * ------------------------------------------------------------ */
 
 #ifdef USE_CAIRO
 cairo_t  *

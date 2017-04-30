@@ -1,5 +1,6 @@
+
 /* ------------------------------------------------------------
- * This is the file "basic.h" of the H2Lib package.
+ * This is the file "basic.h" of the KIPS package.
  * All rights reserved, Steffen Boerm 2009
  * ------------------------------------------------------------ */
 
@@ -363,7 +364,7 @@ INLINE_PREFIX field _h2_fieldrand() {
 
   x = _h2_realrand();
 #ifdef USE_COMPLEX
-  x += f_i * _h2_realrand();
+  x += I * _h2_realrand();
 #endif
 
   return x;
@@ -663,35 +664,10 @@ write_cairopng(cairo_t *cr, const char *filename);
 
 /** @mainpage
  *
- *  The <tt>H2Lib</tt> package contains algorithms and data structures
- *  for working with hierarchical matrices [@cite HA99],
- *  [@cite GRHA02], [@cite HA09] and @f$\mathcal{H}^2@f$-matrices
- *  [@cite HAKHSA00], [@cite BOHA02], [@cite BO10].
- *  It is being developed in the Scientific Computing Group of
- *  Kiel University, since we require a software library that can
- *  be used both for teaching and research purposes and the existing
- *  libraries currently do not meet both requirements.
- *
- *  In order to offer a good basis for teaching courses on
- *  hierarchical matrices, the modules have been organized in a layered
- *  design that allows students to work with the lower layers (e.g.,
- *  for handling matrices and vectors) without having to worry about
- *  higher layers (e.g., approximative algebraic routines or sophisticated
- *  compression algorithms).
- *
- *  A researcher using <tt>H2Lib</tt> finds a relatively complete
- *  set of functions for creating and manipulating @f$\mathcal{H}@f$-
- *  and @f$\mathcal{H}^2@f$-matrices, e.g., for performing
- *  matrix-vector multiplications, approximative algebraic operations
- *  like multiplication, inversion and factorization, and functions
- *  for compressing and converting matrices between different
- *  representations.
- *
- *  For the sake of convenience, we have also included modules for
- *  a number of typical model problems, e.g., for boundary integral
- *  equations or elliptic partial differential equations, with the
- *  corresponding auxiliary modules for singular quadrature and
- *  simple grid management.
+ *  <tt>KIPS</tt> (Kiel Particle Simulator) is a software library
+ *  for particle simulations with special focus on the efficient
+ *  evaluation of non-local interactions, e.g., due to electrostatic
+ *  or gravitational forces.
  *
  */
 
