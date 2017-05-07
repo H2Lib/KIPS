@@ -6,7 +6,8 @@
 KIPS_CORE0 = \
 	Library/basic.c \
 	Library/settings.c \
-	Library/parameters.c
+	Library/parameters.c \
+	Library/interpolation.c
 
 KIPS_CORE1 = \
 	Library/avector.c \
@@ -41,6 +42,7 @@ DEPENDENCIES_libkips := $(SOURCES_libkips:.c=.d)
 
 SOURCES_stable := \
 	Tests/test_amatrix.c \
+	Tests/test_interpolation.c \
 	Tests/test_particles.c
 
 SOURCES_tests = \
