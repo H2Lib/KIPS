@@ -163,7 +163,7 @@ setrank_clusterbasis(uint k, pclusterbasis cb)
  * ------------------------------------------------------------ */
 
 pclusterbasis
-build_from_cluster_clusterbasis(pccluster t)
+build_fromcluster_clusterbasis(pccluster t)
 {
   pclusterbasis cb, cb1;
   uint      i;
@@ -172,7 +172,7 @@ build_from_cluster_clusterbasis(pccluster t)
 
   if (cb->sons > 0) {
     for (i = 0; i < cb->sons; i++) {
-      cb1 = build_from_cluster_clusterbasis(t->son[i]);
+      cb1 = build_fromcluster_clusterbasis(t->son[i]);
       cb->son[i] = cb1;
     }
   }

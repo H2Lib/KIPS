@@ -401,7 +401,7 @@ random_h2matrix(ph2matrix h2)
  * ------------------------------------------------------------ */
 
 ph2matrix
-build_from_block_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb)
+build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb)
 {
   ph2matrix h, h1;
   pcblock   b1;
@@ -433,7 +433,7 @@ build_from_block_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb)
 	  cb1 = cb->son[j];
 	}
 
-	h1 = build_from_block_h2matrix(b1, rb1, cb1);
+	h1 = build_fromblock_h2matrix(b1, rb1, cb1);
 
 	h->son[i+j*rsons] = h1;
       }

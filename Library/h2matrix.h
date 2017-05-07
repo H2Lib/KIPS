@@ -274,7 +274,7 @@ random_h2matrix(ph2matrix h2);
  *  @param cb Column cluster basis.
  *  @returns New @ref h2matrix object. */
 HEADER_PREFIX ph2matrix
-build_from_block_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb);
+build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb);
 
 /* ------------------------------------------------------------
  * Matrix-vector multiplication

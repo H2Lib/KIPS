@@ -180,7 +180,7 @@ setrank_clusterbasis(uint k, pclusterbasis cb);
  *  @returns New root @ref clusterbasis object following the
  *         structure of the cluster tree. */
 HEADER_PREFIX pclusterbasis
-build_from_cluster_clusterbasis(pccluster t);
+build_fromcluster_clusterbasis(pccluster t);
 
 /* ------------------------------------------------------------
  * Statistics
