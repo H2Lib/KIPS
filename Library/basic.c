@@ -38,14 +38,14 @@
  * ------------------------------------------------------------ */
 
 void
-init_h2lib(int *argc, char ***argv)
+init_kips(int *argc, char ***argv)
 {
   (void) argc;
   (void) argv;
 
 #ifdef USE_OPENMP
   if (omp_in_parallel()) {
-    fprintf(stderr, "Calling init_h2lib in parallel section is forbidden.\n");
+    fprintf(stderr, "Calling init_kips in parallel section is forbidden.\n");
     abort();
   }
   omp_set_nested(1);
@@ -62,7 +62,7 @@ init_h2lib(int *argc, char ***argv)
 }
 
 void
-uninit_h2lib()
+uninit_kips()
 {
 
 }

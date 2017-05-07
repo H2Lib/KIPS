@@ -66,14 +66,14 @@ extern int max_pardepth;
  *  @param argv Values of command line parameters.
  */
 HEADER_PREFIX void
-init_h2lib(int *argc, char ***argv);
+init_kips(int *argc, char ***argv);
 
 /** @brief Uninitialize the library.
  *
  *  This function cleans up the run-time environment once the
- *  library is no longer neede. */
+ *  library is no longer needed. */
 HEADER_PREFIX void
-uninit_h2lib();
+uninit_kips();
 
 /* ------------------------------------------------------------
  * General utility macros and functions

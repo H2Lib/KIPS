@@ -11,7 +11,7 @@ static const real tolerance = 1.0e-12;
 #endif
 
 int
-main()
+main(int argc, char **argv)
 {
   pamatrix  A, B, C, D;
   pavector  x, y, z;
@@ -20,6 +20,8 @@ main()
   uint      problems = 0;
   uint      rows, cols;
   uint      i, j, k;
+
+  init_kips(&argc, &argv);
 
   rows = 8;
   cols = 7;
@@ -306,6 +308,8 @@ main()
 		"  %u vectors still active\n"
 		"  %u errors found\n", getactives_amatrix(),
 		getactives_avector(), problems);
+
+  uninit_kips();
 
   return problems;
 }

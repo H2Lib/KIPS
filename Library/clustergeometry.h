@@ -36,8 +36,8 @@ struct _clustergeometry
 };
 
 /* ------------------------------------------------------------
-   Constructors and destructors
-   ------------------------------------------------------------ */
+ * Constructors and destructors
+ * ------------------------------------------------------------ */
 
 HEADER_PREFIX pclustergeometry
 new_clustergeometry(uint dim, uint nidx);
@@ -46,8 +46,8 @@ HEADER_PREFIX void
 del_clustergeometry(pclustergeometry cg);
 
 /* ------------------------------------------------------------
-   Building cluster trees, low-level routines
-   ------------------------------------------------------------ */
+ * Building cluster trees, low-level routines
+ * ------------------------------------------------------------ */
 
 /* Geometrically balanced splitting */
 pcluster
@@ -56,15 +56,15 @@ splitgeometric_clustergeometry(pclustergeometry cg,
 			       uint size, uint *idx);
 
 /* Geometrically regular splitting, requires pmin/pmax to contain
-   a bounding box for the characteristic points in idx */
+ * a bounding box for the characteristic points in idx */
 pcluster
 splitregular_clustergeometry(pclustergeometry cg,
 			     int levels, uint resolution, uint split,
 			     uint size, uint *idx);
 
 /* Cardinality-balanced splitting, requires perm to contain
-   permutations of idx for all coordinate directions that put
-   the coordinates into ascending order */
+ * permutations of idx for all coordinate directions that put
+ * the coordinates into ascending order */
 pcluster
 splitcardinality_clustergeometry(pclustergeometry cg,
 				 int levels, uint resolution,
@@ -72,7 +72,7 @@ splitcardinality_clustergeometry(pclustergeometry cg,
 				 uint *perm);
 
 /* Mixed splitting strategy: use cardinality-balanced approach for
-   cardepth levels, then switch to geometric splitting */
+ * cardepth levels, then switch to geometric splitting */
 pcluster
 splitmixed_clustergeometry(pclustergeometry cg, 
 			   uint cardepth, int levels, uint resolution,
@@ -80,8 +80,8 @@ splitmixed_clustergeometry(pclustergeometry cg,
 			   uint *perm);
 
 /* ------------------------------------------------------------
-   Building cluster trees, high-level routines
-   ------------------------------------------------------------ */
+ * Building cluster trees, high-level routines
+ * ------------------------------------------------------------ */
 
 pcluster
 buildgeometric_clustergeometry(pclustergeometry cg,

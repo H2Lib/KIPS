@@ -19,8 +19,8 @@ KIPS_CORE2 = \
 	Library/clusterbasis.c \
 	Library/clustergeometry.c \
 	Library/uniform.c \
-	Library/h2matrix.c
-
+	Library/h2matrix.c \
+	Library/particles.c
 
 SOURCES_libkips := \
 	$(KIPS_CORE0) \
@@ -40,7 +40,8 @@ DEPENDENCIES_libkips := $(SOURCES_libkips:.c=.d)
 # ------------------------------------------------------------
 
 SOURCES_stable := \
-	Tests/test_amatrix.c
+	Tests/test_amatrix.c \
+	Tests/test_particles.c
 
 SOURCES_tests = \
 	$(SOURCES_stable)
