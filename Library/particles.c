@@ -25,8 +25,11 @@ void
 del_particles(pparticles p)
 {
   freemem(p->x2);
+  p->x2 = 0;
   freemem(p->x1);
+  p->x1 = 0;
   freemem(p->x0);
+  p->x0 = 0;
   freemem(p);
 }
 
