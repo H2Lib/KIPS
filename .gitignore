@@ -25,6 +25,8 @@
 
 # Executables
 Tests/test_amatrix
+Tests/test_interpolation
+Tests/test_particles
 *.exe
 *.out
 *.app
@@ -35,3 +37,6 @@ Tests/test_amatrix
 # Debug files
 *.dSYM/
 *.su
+
+# Temporary fields
+*~
