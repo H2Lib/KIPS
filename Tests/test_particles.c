@@ -7,6 +7,12 @@
 #include "block.h"
 #include "h2matrix.h"
 
+#ifdef USE_FLOAT
+static const real tolerance = 5.0e-5;
+#else
+static const real tolerance = 1.0e-12;
+#endif
+
 int
 main(int argc, char **argv)
 {
@@ -17,13 +23,16 @@ main(int argc, char **argv)
   pblock broot;
   pclusterbasis cb;
   ph2matrix G;
-  pavector m, phi;
+  pavector src, trg;
+  pamatrix V, V1, Vson, E;
   pstopwatch sw;
+  real norm, error;
   real t_run;
+  uint problems = 0;
   size_t sz;
-  uint n;
+  uint n, m;
   field alpha;
-  uint i;
+  uint i, off;
 
   init_kips(&argc, &argv);
 
@@ -31,9 +40,11 @@ main(int argc, char **argv)
 
   n = askforint("Number of particles?", "kips_particles", 40000);
 
-  (void) printf("Creating %u random particles\n",
-		n);
-  p = new_particles(n);
+  m = askforint("Interpolation order?", "kips_intorder", 6);
+
+  (void) printf("Creating %u random particles, interpolation order %u\n",
+		n, m);
+  p = new_particles(n, m);
   random_particles(p);
 
   (void) printf("Setting up cluster tree\n");
@@ -46,6 +57,43 @@ main(int argc, char **argv)
 		"  %u levels\n",
 		root->desc,
 		getdepth_cluster(root) + 1);
+
+  (void) printf("Creating V matrix for the root\n");
+  V = new_amatrix(root->size, m*m*m);
+  buildV_particles(p, root, V);
+  norm = normfrob_amatrix(V);
+
+  if(root->sons > 0) {
+    (void) printf("Subtracting V E for the sons\n");
+    off = 0;
+    for(i=0; i<root->sons; i++) {
+      V1 = new_sub_amatrix(V, root->son[i]->size, off, m*m*m, 0);
+      Vson = new_amatrix(root->son[i]->size, m*m*m);
+      buildV_particles(p, root->son[i], Vson);
+
+      E = new_amatrix(m*m*m, m*m*m);
+      buildE_particles(p, root->son[i], root, E);
+      addmul_amatrix(-1.0, false, Vson, false, E, V1);
+
+      del_amatrix(E);
+      del_amatrix(Vson);
+      del_amatrix(V1);
+
+      off += root->son[i]->size;
+    }
+    assert(off == root->size);
+
+    error = normfrob_amatrix(V);
+    (void) printf("  Error %.3e (%.3e)",
+		  error, error / norm);
+    if(error <= tolerance * norm)
+      (void) printf("  --  Okay\n");
+    else {
+      (void) printf("  --  NOT Okay\a\n");
+      problems++;
+    }
+  }
+  del_amatrix(V);
 
   (void) printf("Setting up block tree\n");
   broot = buildh2std_block(root, root, 2.0);
@@ -73,6 +121,14 @@ main(int argc, char **argv)
 		"  %.2f MB (%.1f KB/DoF)\n",
 		t_run,
 		sz / 1048576.0, sz / 1024.0 / n);
+
+  (void) printf("----------------------------------------\n"
+		"  %u matrices and\n"
+		"  %u vectors still active\n"
+		"  %u errors found\n",
+		getactives_amatrix(),
+		getactives_avector(),
+		problems);
 
   uninit_kips();
 
