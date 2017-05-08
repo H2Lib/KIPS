@@ -306,8 +306,10 @@ main(int argc, char **argv)
   (void) printf("----------------------------------------\n"
 		"  %u matrices and\n"
 		"  %u vectors still active\n"
-		"  %u errors found\n", getactives_amatrix(),
-		getactives_avector(), problems);
+		"  %u errors found\n",
+		getactives_amatrix(),
+		getactives_avector(),
+		problems);
 
   uninit_kips();
 
