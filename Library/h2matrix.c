@@ -449,6 +449,41 @@ build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb)
 }
 
 /* ------------------------------------------------------------
+ * Initialize H^2-matrix using callback functions
+ * ------------------------------------------------------------ */
+
+void
+fill_h2matrix(void (*buildN)(void *data, const uint *ridx, const uint *cidx, pamatrix N),
+	      void (*buildS)(void *data, pccluster rc, pccluster cc, pamatrix S),
+	      void *data,
+	      ph2matrix G)
+{
+  uint rsons, csons;
+  uint i, j;
+
+  if(G->son) {
+    rsons = G->rsons;
+    csons = G->csons;
+
+    for(j=0; j<csons; j++)
+      for(i=0; i<rsons; i++)
+	fill_h2matrix(buildN, buildS, data, G->son[i+j*rsons]);
+  }
+  else if(G->u) {
+    buildS(data, G->rb->t, G->cb->t, &G->u->S);
+
+    assert(G->u->S.rows == G->rb->k);
+    assert(G->u->S.cols == G->cb->k);
+  }
+  else if(G->f) {
+    buildN(data, G->rb->t->idx, G->cb->t->idx, G->f);
+
+    assert(G->f->rows == G->rb->t->size);
+    assert(G->f->cols == G->cb->t->size);
+  }
+}
+
+/* ------------------------------------------------------------
  * Matrix-vector multiplication
  * ------------------------------------------------------------ */
 
@@ -479,7 +514,13 @@ fastaddeval_h2matrix(field alpha, pch2matrix h2,
   assert(yt->size == h2->rb->ktree);
 
   if (h2->u) {
-    addeval_amatrix(alpha, &h2->u->S, xt, yt);
+    xt1 = init_sub_avector(&loc1, (pavector) xt, cb->k, 0);
+    yt1 = init_sub_avector(&loc2, yt, rb->k, 0);
+
+    addeval_amatrix(alpha, &h2->u->S, xt1, yt1);
+
+    uninit_avector(yt1);
+    uninit_avector(xt1);
   }
   else if (h2->f) {
     xp = init_sub_avector(&loc1, (pavector) xt, cb->t->size, cb->k);
@@ -559,7 +600,13 @@ fastaddevaltrans_h2matrix(field alpha, pch2matrix h2,
   assert(yt->size == h2->cb->ktree);
 
   if (h2->u) {
+    xt1 = init_sub_avector(&loc1, (pavector) xt, rb->k, 0);
+    yt1 = init_sub_avector(&loc2, yt, cb->k, 0);
+
     addevaltrans_amatrix(alpha, &h2->u->S, xt, yt);
+
+    uninit_avector(yt1);
+    uninit_avector(xt1);
   }
   else if (h2->f) {
     xp = init_sub_avector(&loc1, (pavector) xt, rb->t->size, rb->k);

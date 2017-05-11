@@ -96,9 +96,37 @@ addeval_direct_particles(field alpha, pcparticles p,
   pfield vy = y->v;
   uint i, j;
 
-  for(j=0; j<n; j++)
-    for(i=0; i<n; i++)
+  for(j=0; j<n; j++) {
+    for(i=0; i<j; i++)
       vy[i] += alpha * potential_newton(px[i], px[j]) * vx[j];
+    for(i=j+1; i<n; i++)
+      vy[i] += alpha * potential_newton(px[i], px[j]) * vx[j];
+  }
+}
+
+void
+buildN_particles(pcparticles p, const uint *ridx, const uint *cidx,
+		 pamatrix N)
+{
+  const real **x = (const real **) p->x;
+  pfield Na = N->a;
+  longindex ldN = N->ld;
+  uint i, j, ii, jj;
+
+  /* Iterate over all columns */
+  for(j=0; j<N->cols; j++) {
+    jj = (cidx ? cidx[j] : j);
+
+    /* Iterate over all rows */
+    for(i=0; i<N->rows; i++) {
+      ii = (ridx ? ridx[i] : i);
+
+      /* Evaluate kernel function */
+      Na[i+j*ldN] = (ii == jj ?
+		     0.0 :
+		     potential_newton(x[ii], x[jj]));
+    }
+  }
 }
 
 void
@@ -159,11 +187,11 @@ buildV_particles(pcparticles p, pccluster t, pamatrix V)
 }
 
 void
-buildE_particles(pcparticles p, pccluster son, pccluster father,
+buildE_particles(pcparticles p, pccluster sc, pccluster fc,
 		 pamatrix E)
 {
   pcinterpolation in = p->in;
-  uint m = p->in->m;
+  uint m = in->m;
   pfield Ea;
   longindex ldE;
   pinterpolation sin0, sin1, sin2;
@@ -182,15 +210,15 @@ buildE_particles(pcparticles p, pccluster son, pccluster father,
 
   /* Set up interpolation points for x, y, and z coordinates
    * of the son cluster */
-  sin0 = build_transformed_interpolation(in, son->bmin[0], son->bmax[0]);
-  sin1 = build_transformed_interpolation(in, son->bmin[1], son->bmax[1]);
-  sin2 = build_transformed_interpolation(in, son->bmin[2], son->bmax[2]);
+  sin0 = build_transformed_interpolation(in, sc->bmin[0], sc->bmax[0]);
+  sin1 = build_transformed_interpolation(in, sc->bmin[1], sc->bmax[1]);
+  sin2 = build_transformed_interpolation(in, sc->bmin[2], sc->bmax[2]);
 
   /* Set up interpolation points for x, y, and z coordinates
-   * of the son cluster */
-  fin0 = build_transformed_interpolation(in, father->bmin[0], father->bmax[0]);
-  fin1 = build_transformed_interpolation(in, father->bmin[1], father->bmax[1]);
-  fin2 = build_transformed_interpolation(in, father->bmin[2], father->bmax[2]);
+   * of the father cluster */
+  fin0 = build_transformed_interpolation(in, fc->bmin[0], fc->bmax[0]);
+  fin1 = build_transformed_interpolation(in, fc->bmin[1], fc->bmax[1]);
+  fin2 = build_transformed_interpolation(in, fc->bmin[2], fc->bmax[2]);
 
   /* Iterate over z coordinates */
   for(mu2=0; mu2<m; mu2++)
@@ -225,4 +253,82 @@ buildE_particles(pcparticles p, pccluster son, pccluster father,
   del_interpolation(sin2);
   del_interpolation(sin1);
   del_interpolation(sin0);
+}
+
+void
+buildS_particles(pcparticles p, pccluster rc, pccluster cc,
+		 pamatrix S)
+{
+  pcinterpolation in = p->in;
+  uint m = in->m;
+  pfield Sa;
+  longindex ldS;
+  pinterpolation rin0, rin1, rin2;
+  pinterpolation cin0, cin1, cin2;
+  uint nu0, nu1, nu2;
+  uint mu0, mu1, mu2;
+  real x[3], y[3];
+  uint i, i1, i2, j, j1, j2;
+
+  /* Adjust size of V if necessary */
+  if(S->rows != m*m*m || S->cols != m*m*m)
+    resize_amatrix(S, m*m*m, m*m*m);
+
+  Sa = S->a;
+  ldS = S->ld;
+
+  /* Set up interpolation points for x, y, and z coordinates
+   * of the row cluster */
+  rin0 = build_transformed_interpolation(in, rc->bmin[0], rc->bmax[0]);
+  rin1 = build_transformed_interpolation(in, rc->bmin[1], rc->bmax[1]);
+  rin2 = build_transformed_interpolation(in, rc->bmin[2], rc->bmax[2]);
+
+  /* Set up interpolation points for x, y, and z coordinates
+   * of the column cluster */
+  cin0 = build_transformed_interpolation(in, cc->bmin[0], cc->bmax[0]);
+  cin1 = build_transformed_interpolation(in, cc->bmin[1], cc->bmax[1]);
+  cin2 = build_transformed_interpolation(in, cc->bmin[2], cc->bmax[2]);
+
+  /* Iterate over column indices */
+  for(mu2=0; mu2<m; mu2++) {
+    j2 = mu2;
+    y[2] = cin2->xi[mu2];
+
+    for(mu1=0; mu1<m; mu1++) {
+      j1 = mu1 + m * j2;
+      y[1] = cin1->xi[mu1];
+
+      for(mu0=0; mu0<m; mu0++) {
+	j = mu0 + m * j1;
+	y[0] = cin0->xi[mu0];
+
+	/* Iterate over row indices */
+	for(nu2=0; nu2<m; nu2++) {
+	  i2 = nu2;
+	  x[2] = rin2->xi[nu2];
+
+	  for(nu1=0; nu1<m; nu1++) {
+	    i1 = nu1 + m * i2;
+	    x[1] = rin1->xi[nu1];
+
+	    for(nu0=0; nu0<m; nu0++) {
+	      i = nu0 + m * i1;
+	      x[0] = rin0->xi[nu0];
+
+	      /* Evaluate kernel function */
+	      Sa[i+j*ldS] = potential_newton(x, y);
+	    }
+	  }
+	}
+      }
+    }
+  }
+
+  /* Clean up interpolation points */
+  del_interpolation(cin2);
+  del_interpolation(cin1);
+  del_interpolation(cin0);
+  del_interpolation(rin2);
+  del_interpolation(rin1);
+  del_interpolation(rin0);
 }

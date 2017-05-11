@@ -34,6 +34,12 @@ typedef const clusterbasis *pcclusterbasis;
 #include "cluster.h"
 #include "amatrix.h"
 
+/** @brief Callback function for leaf matrices. */
+typedef void (*buildV_t)(void *, pccluster, pamatrix);
+
+/** @brief Callback function for transfer matrices. */
+typedef void (*buildE_t)(void *, pccluster, pccluster, pamatrix);
+
 /** @brief Representation of a cluster basis. */
 struct _clusterbasis {
   /** @brief Corresponding cluster. */
@@ -181,6 +187,22 @@ setrank_clusterbasis(uint k, pclusterbasis cb);
  *         structure of the cluster tree. */
 HEADER_PREFIX pclusterbasis
 build_fromcluster_clusterbasis(pccluster t);
+
+/* ------------------------------------------------------------
+ * Initialize clusterbasis using callback functions
+ * ------------------------------------------------------------ */
+
+/** @brief Fill the matrices of a @ref clusterbasis.
+ *
+ *  @param buildV Callback function for leaf matrices.
+ *  @param buildE Callback function for transfer matrices.
+ *  @param data Additional data for callback functions.
+ *  @param cb Cluster basis to be initialized. */
+HEADER_PREFIX void
+fill_clusterbasis(void (*buildV)(void *data, pccluster t, pamatrix V),
+		  void (*buildE)(void *data, pccluster sc, pccluster fc, pamatrix E),
+		  void *data,
+		  pclusterbasis cb);
 
 /* ------------------------------------------------------------
  * Statistics

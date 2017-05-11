@@ -37,6 +37,12 @@ typedef const h2matrix *pch2matrix;
 #include "clusterbasis.h"
 #include "settings.h"
 
+/** @brief Callback function for inadmissible leaves. */
+typedef void (*buildN_t)(void *, const uint *, const uint *, pamatrix);
+
+/** @brief Callback function for admissible leaves. */
+typedef void (*buildS_t)(void *, pccluster, pccluster, pamatrix);
+
 /** @brief Representation of @f$\mathcal{H}^2@f$-matrices.
  *
  *  @f$\mathcal{H}^2@f$-matrices are represented recursively:
@@ -275,6 +281,22 @@ random_h2matrix(ph2matrix h2);
  *  @returns New @ref h2matrix object. */
 HEADER_PREFIX ph2matrix
 build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb);
+
+/* ------------------------------------------------------------
+ * Initialize H^2-matrix using callback functions
+ * ------------------------------------------------------------ */
+
+/** @brief Fill the matrices of an @ref h2matrix.
+ *
+ *  @param buildN Callback function for inadmissible blocks.
+ *  @param buildS Callback function for admissible blocks.
+ *  @param data Additional data for callback functions.
+ *  @param G @f$\mathcal{H}^2@f$-matrix to be initialized. */
+HEADER_PREFIX void
+fill_h2matrix(void (*buildN)(void *data, const uint *ridx, const uint *cidx, pamatrix N),
+	      void (*buildS)(void *data, pccluster rc, pccluster cc, pamatrix S),
+	      void *data,
+	      ph2matrix G);
 
 /* ------------------------------------------------------------
  * Matrix-vector multiplication

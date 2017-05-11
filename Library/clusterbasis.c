@@ -183,6 +183,37 @@ build_fromcluster_clusterbasis(pccluster t)
 }
 
 /* ------------------------------------------------------------
+ * Initialize clusterbasis using callback functions
+ * ------------------------------------------------------------ */
+
+void
+fill_clusterbasis(void (*buildV)(void *data, pccluster t, pamatrix V),
+		  void (*buildE)(void *data, pccluster sc, pccluster fc, pamatrix E),
+		  void *data,
+		  pclusterbasis cb)
+{
+  uint i;
+
+  if(cb->sons > 0) {
+    for(i=0; i<cb->sons; i++) {
+      buildE(data, cb->son[i]->t, cb->t, &cb->son[i]->E);
+
+      fill_clusterbasis(buildV, buildE, data, cb->son[i]);
+
+      assert(i == 0 || cb->son[i]->E.cols == cb->son[0]->E.cols);
+    }
+    cb->k = cb->son[0]->E.cols;
+  }
+  else {
+    buildV(data, cb->t, &cb->V);
+
+    cb->k = cb->V.cols;
+  }
+
+  update_clusterbasis(cb);
+}
+
+/* ------------------------------------------------------------
  * Statistics
  * ------------------------------------------------------------ */
 
@@ -238,6 +269,11 @@ forward_clusterbasis(pcclusterbasis cb, pcavector x, pavector xt)
       /* Compute coefficients in the subtree */
       forward_clusterbasis(cb->son[i], x, xt1);
 
+      uninit_avector(xt1);
+
+      /* This part corresponds to the i-th son */
+      xt1 = init_sub_avector(&loc2, xt, cb->son[i]->k, xtoff);
+
       /* Multiply by transfer matrix */
       addevaltrans_amatrix(1.0, &cb->son[i]->E, xt1, xc);
 
@@ -279,11 +315,16 @@ backward_clusterbasis(pcclusterbasis cb, pavector yt, pavector y)
   if (cb->sons > 0) {
     ytoff = cb->k;
     for (i = 0; i < cb->sons; i++) {
-      /* This part corresponds to the subtree rooted in the i-th son */
-      yt1 = init_sub_avector(&loc2, yt, cb->son[i]->ktree, ytoff);
+      /* This part corresponds to the i-th son */
+      yt1 = init_sub_avector(&loc2, yt, cb->son[i]->k, ytoff);
 
       /* Multiply by transfer matrix */
       addeval_amatrix(1.0, &cb->son[i]->E, yc, yt1);
+
+      uninit_avector(yt1);
+
+      /* This part corresponds to the subtree rooted in the i-th son */
+      yt1 = init_sub_avector(&loc2, yt, cb->son[i]->ktree, ytoff);
 
       /* Treat coefficients in the subtree */
       backward_clusterbasis(cb->son[i], yt1, y);

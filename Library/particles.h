@@ -60,11 +60,20 @@ addeval_direct_particles(field alpha, pcparticles p,
 			 pcavector m, pavector phi);
 
 HEADER_PREFIX void
-buildV_particles(pcparticles p, pccluster t, pamatrix V);
+buildN_particles(pcparticles p, const uint *ridx, const uint *cidx,
+		 pamatrix N);
 
 HEADER_PREFIX void
-buildE_particles(pcparticles p, pccluster son, pccluster father,
+buildV_particles(pcparticles p, pccluster t,
+		 pamatrix V);
+
+HEADER_PREFIX void
+buildE_particles(pcparticles p, pccluster sc, pccluster fc,
 		 pamatrix E);
+
+HEADER_PREFIX void
+buildS_particles(pcparticles p, pccluster rc, pccluster cc,
+		 pamatrix S);
 
 /** @} */
 

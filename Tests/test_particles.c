@@ -30,7 +30,7 @@ main(int argc, char **argv)
   real t_run;
   uint problems = 0;
   size_t sz;
-  uint n, m;
+  uint n, m, res;
   field alpha;
   uint i, off;
 
@@ -40,19 +40,20 @@ main(int argc, char **argv)
 
   n = askforint("Number of particles?", "kips_particles", 40000);
 
-  m = askforint("Interpolation order?", "kips_intorder", 6);
+  m = askforint("Interpolation order?", "kips_intorder", 4);
 
   (void) printf("Creating %u random particles, interpolation order %u\n",
 		n, m);
   p = new_particles(n, m);
   random_particles(p);
 
-  (void) printf("Setting up cluster tree\n");
+  res = 2 * m * m * m;
+  (void) printf("Setting up cluster tree, resolution %u\n", res);
   cg = buildgeometry_particles(p);
   idx = (uint *) allocmem(sizeof(uint) * n);
   for(i=0; i<n; i++)
     idx[i] = i;
-  root = buildgeometric_clustergeometry(cg, 100, 64, n, idx);
+  root = buildgeometric_clustergeometry(cg, 100, 2*m*m*m, n, idx);
   (void) printf("  %u clusters\n"
 		"  %u levels\n",
 		root->desc,
@@ -105,22 +106,68 @@ main(int argc, char **argv)
   (void) printf("Setting up Lagrange cluster basis\n");
   start_stopwatch(sw);
   cb = build_fromcluster_clusterbasis(root);
+  fill_clusterbasis((buildV_t) buildV_particles,
+		    (buildE_t) buildE_particles,
+		    p, cb);
   t_run = stop_stopwatch(sw);
   sz = getsize_clusterbasis(cb);
   (void) printf("  %.1f seconds\n"
-		"  %.2f MB (%.1f KB/DoF)\n",
+		"  %.2f MB (%.1f KB/DoF)\n"
+		"  k %u, ktree %u\n",
 		t_run,
-		sz / 1048576.0, sz / 1024.0 / n);
+		sz / 1048576.0, sz / 1024.0 / n,
+		cb->k, cb->ktree);
 
   (void) printf("Setting up H2-matrix\n");
   start_stopwatch(sw);
   G = build_fromblock_h2matrix(broot, cb, cb);
+  fill_h2matrix((buildN_t) buildN_particles,
+		(buildS_t) buildS_particles,
+		p, G);
   t_run = stop_stopwatch(sw);
   sz = getsize_h2matrix(G);
   (void) printf("  %.1f seconds\n"
 		"  %.2f MB (%.1f KB/DoF)\n",
 		t_run,
 		sz / 1048576.0, sz / 1024.0 / n);
+
+  (void) printf("Testing approximation\n");
+  src = new_avector(n);
+  trg = new_avector(n);
+  random_avector(src);
+  alpha = FIELD_RAND();
+  clear_avector(trg);
+
+  (void) printf("  Direct evaluation\n");
+  start_stopwatch(sw);
+  addeval_direct_particles(alpha, p, src, trg);
+  t_run = stop_stopwatch(sw);
+  norm = norm2_avector(trg);
+  (void) printf("  %.2f seconds\n"
+		"  Norm %.3e\n",
+		t_run, norm);
+  
+  (void) printf("  H^2-matrix evaluation\n");
+  start_stopwatch(sw);
+  addeval_h2matrix(-alpha, G, src, trg);
+  t_run = stop_stopwatch(sw);
+  error = norm2_avector(trg);
+  (void) printf("  %.2f seconds\n"
+		"  Error %.3e (%.3e)",
+		t_run,
+		error, error / norm);
+
+  if(error <= 15.0 * pow(0.125, m) * norm)
+    (void) printf("  --  Okay\n");
+  else {
+    (void) printf("  --  NOT Okay\a\n");
+    problems++;
+  }
+
+  del_avector(trg);
+  del_avector(src);
+  del_h2matrix(G);
+  del_clusterbasis(cb);
 
   (void) printf("----------------------------------------\n"
 		"  %u matrices and\n"
