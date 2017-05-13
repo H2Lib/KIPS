@@ -134,7 +134,7 @@ clonestructure_h2matrix(pch2matrix G, pclusterbasis rb, pclusterbasis cb)
 
 	H1 = clonestructure_h2matrix(G1, rb1, cb1);
 
-	H->son[i+j*rsons] = H1;
+	H->son[i + j * rsons] = H1;
       }
 
   }
@@ -189,7 +189,7 @@ clone_h2matrix(pch2matrix G, pclusterbasis rb, pclusterbasis cb)
 
 	H1 = clone_h2matrix(G1, rb1, cb1);
 
-	H->son[i+j*rsons] = H1;
+	H->son[i + j * rsons] = H1;
       }
 
   }
@@ -435,7 +435,7 @@ build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb)
 
 	h1 = build_fromblock_h2matrix(b1, rb1, cb1);
 
-	h->son[i+j*rsons] = h1;
+	h->son[i + j * rsons] = h1;
       }
   }
   else if (b->adm)
@@ -453,29 +453,29 @@ build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb)
  * ------------------------------------------------------------ */
 
 void
-fill_h2matrix(void (*buildN)(void *data, const uint *ridx, const uint *cidx, pamatrix N),
-	      void (*buildS)(void *data, pccluster rc, pccluster cc, pamatrix S),
-	      void *data,
-	      ph2matrix G)
+fill_h2matrix(void (*buildN)
+	      (void *data, const uint * ridx, const uint * cidx, pamatrix N),
+	      void (*buildS) (void *data, pccluster rc, pccluster cc,
+			      pamatrix S), void *data, ph2matrix G)
 {
-  uint rsons, csons;
-  uint i, j;
+  uint      rsons, csons;
+  uint      i, j;
 
-  if(G->son) {
+  if (G->son) {
     rsons = G->rsons;
     csons = G->csons;
 
-    for(j=0; j<csons; j++)
-      for(i=0; i<rsons; i++)
-	fill_h2matrix(buildN, buildS, data, G->son[i+j*rsons]);
+    for (j = 0; j < csons; j++)
+      for (i = 0; i < rsons; i++)
+	fill_h2matrix(buildN, buildS, data, G->son[i + j * rsons]);
   }
-  else if(G->u) {
+  else if (G->u) {
     buildS(data, G->rb->t, G->cb->t, &G->u->S);
 
     assert(G->u->S.rows == G->rb->k);
     assert(G->u->S.cols == G->cb->k);
   }
-  else if(G->f) {
+  else if (G->f) {
     buildN(data, G->rb->t->idx, G->cb->t->idx, G->f);
 
     assert(G->f->rows == G->rb->t->size);
@@ -498,8 +498,7 @@ mvm_h2matrix(field alpha, bool h2trans, pch2matrix h2,
 }
 
 void
-fastaddeval_h2matrix(field alpha, pch2matrix h2,
-		     pcavector xt, pavector yt)
+fastaddeval_h2matrix(field alpha, pch2matrix h2, pcavector xt, pavector yt)
 {
   avector   loc1, loc2;
   pavector  xp, yp, xt1, yt1;
@@ -629,11 +628,12 @@ fastaddevaltrans_h2matrix(field alpha, pch2matrix h2,
       xtoff = rb->k;
       for (i = 0; i < rsons; i++) {
 	xt1 = (rb->sons > 0 ?
-	       init_sub_avector(&loc1, (pavector) xt, rb->son[i]->ktree, xtoff) :
-	       init_sub_avector(&loc1, (pavector) xt, rb->ktree, 0));
+	       init_sub_avector(&loc1, (pavector) xt, rb->son[i]->ktree,
+				xtoff) : init_sub_avector(&loc1,
+							  (pavector) xt,
+							  rb->ktree, 0));
 
-	fastaddevaltrans_h2matrix(alpha, h2->son[i + j * rsons],
-				  xt1, yt1);
+	fastaddevaltrans_h2matrix(alpha, h2->son[i + j * rsons], xt1, yt1);
 
 	uninit_avector(xt1);
 
@@ -650,8 +650,7 @@ fastaddevaltrans_h2matrix(field alpha, pch2matrix h2,
 }
 
 void
-addevaltrans_h2matrix(field alpha, pch2matrix h2,
-		      pcavector x, pavector y)
+addevaltrans_h2matrix(field alpha, pch2matrix h2, pcavector x, pavector y)
 {
   pavector  xt, yt;
 
@@ -875,8 +874,7 @@ addevalsymm_diag(field alpha, pch2matrix h2, pavector xt,
 }
 
 void
-addevalsymm_h2matrix(field alpha, pch2matrix h2,
-		     pcavector x, pavector y)
+addevalsymm_h2matrix(field alpha, pch2matrix h2, pcavector x, pavector y)
 {
   pavector  xt, yt, xta, yta;
 
@@ -942,15 +940,17 @@ fastaddeval_otf_h2matrix(field alpha,
 
   assert(xt->size == cb->ktree);
   assert(yt->size == rb->ktree);
+  assert(b->rc == rb->t);
+  assert(b->cc == cb->t);
 
-  if(b->son) {
+  if (b->son) {
     rsons = b->rsons;
     csons = b->csons;
 
-    if(b->son[0]->rc == b->rc) {
+    if (b->son[0]->rc == b->rc) {
       assert(rsons == 1);
 
-      if(b->son[0]->cc == b->cc) {
+      if (b->son[0]->cc == b->cc) {
 	assert(csons == 1);
 
 	fastaddeval_otf_h2matrix(alpha, b->son[0], rb, cb,
@@ -960,8 +960,9 @@ fastaddeval_otf_h2matrix(field alpha,
 	assert(csons == cb->sons);
 
 	xtoff = cb->k;
-	for(j=0; j<csons; j++) {
-	  xt1 = init_sub_avector(&loc2, (pavector) xt, cb->son[j]->ktree, xtoff);
+	for (j = 0; j < csons; j++) {
+	  xt1 =
+	    init_sub_avector(&loc2, (pavector) xt, cb->son[j]->ktree, xtoff);
 
 	  fastaddeval_otf_h2matrix(alpha, b->son[j], rb, cb->son[j],
 				   buildN, buildS, data, xt1, yt);
@@ -976,11 +977,11 @@ fastaddeval_otf_h2matrix(field alpha,
     else {
       assert(rsons == rb->sons);
 
-      if(b->son[0]->cc == b->cc) {
+      if (b->son[0]->cc == b->cc) {
 	assert(csons == 1);
 
 	ytoff = rb->k;
-	for(i=0; i<rsons; i++) {
+	for (i = 0; i < rsons; i++) {
 	  yt1 = init_sub_avector(&loc3, yt, rb->son[i]->ktree, ytoff);
 
 	  fastaddeval_otf_h2matrix(alpha, b->son[i], rb->son[i], cb,
@@ -996,15 +997,17 @@ fastaddeval_otf_h2matrix(field alpha,
 	assert(csons == cb->sons);
 
 	xtoff = cb->k;
-	for(j=0; j<csons; j++) {
-	  xt1 = init_sub_avector(&loc2, (pavector) xt, cb->son[j]->ktree, xtoff);
+	for (j = 0; j < csons; j++) {
+	  xt1 =
+	    init_sub_avector(&loc2, (pavector) xt, cb->son[j]->ktree, xtoff);
 
 	  ytoff = rb->k;
-	  for(i=0; i<rsons; i++) {
+	  for (i = 0; i < rsons; i++) {
 	    yt1 = init_sub_avector(&loc3, yt, rb->son[i]->ktree, ytoff);
 
-	    fastaddeval_otf_h2matrix(alpha, b->son[i+j*rsons], rb->son[i], cb->son[j],
-				     buildN, buildS, data, xt1, yt1);
+	    fastaddeval_otf_h2matrix(alpha, b->son[i + j * rsons], rb->son[i],
+				     cb->son[j], buildN, buildS, data, xt1,
+				     yt1);
 
 	    uninit_avector(yt1);
 
@@ -1020,7 +1023,7 @@ fastaddeval_otf_h2matrix(field alpha,
       }
     }
   }
-  else if(b->adm) {
+  else if (b->adm) {
     xt1 = init_sub_avector(&loc2, (pavector) xt, cb->k, 0);
     yt1 = init_sub_avector(&loc3, yt, rb->k, 0);
 
@@ -1087,15 +1090,17 @@ fastaddevaltrans_otf_h2matrix(field alpha,
 
   assert(xt->size == rb->ktree);
   assert(yt->size == cb->ktree);
+  assert(b->rc == rb->t);
+  assert(b->cc == cb->t);
 
-  if(b->son) {
+  if (b->son) {
     rsons = b->rsons;
     csons = b->csons;
 
-    if(b->son[0]->rc == b->rc) {
+    if (b->son[0]->rc == b->rc) {
       assert(rsons == 1);
 
-      if(b->son[0]->cc == b->cc) {
+      if (b->son[0]->cc == b->cc) {
 	assert(csons == 1);
 
 	fastaddevaltrans_otf_h2matrix(alpha, b->son[0], rb, cb,
@@ -1105,7 +1110,7 @@ fastaddevaltrans_otf_h2matrix(field alpha,
 	assert(csons == cb->sons);
 
 	ytoff = cb->k;
-	for(j=0; j<csons; j++) {
+	for (j = 0; j < csons; j++) {
 	  yt1 = init_sub_avector(&loc2, yt, cb->son[j]->ktree, ytoff);
 
 	  fastaddevaltrans_otf_h2matrix(alpha, b->son[j], rb, cb->son[j],
@@ -1121,12 +1126,13 @@ fastaddevaltrans_otf_h2matrix(field alpha,
     else {
       assert(rsons == rb->sons);
 
-      if(b->son[0]->cc == b->cc) {
+      if (b->son[0]->cc == b->cc) {
 	assert(csons == 1);
 
 	xtoff = rb->k;
-	for(i=0; i<rsons; i++) {
-	  xt1 = init_sub_avector(&loc3, (pavector) xt, rb->son[i]->ktree, xtoff);
+	for (i = 0; i < rsons; i++) {
+	  xt1 =
+	    init_sub_avector(&loc3, (pavector) xt, rb->son[i]->ktree, xtoff);
 
 	  fastaddevaltrans_otf_h2matrix(alpha, b->son[i], rb->son[i], cb,
 					buildN, buildS, data, xt1, yt);
@@ -1141,15 +1147,18 @@ fastaddevaltrans_otf_h2matrix(field alpha,
 	assert(csons == cb->sons);
 
 	ytoff = cb->k;
-	for(j=0; j<csons; j++) {
+	for (j = 0; j < csons; j++) {
 	  yt1 = init_sub_avector(&loc2, yt, cb->son[j]->ktree, ytoff);
 
 	  xtoff = rb->k;
-	  for(i=0; i<rsons; i++) {
-	    xt1 = init_sub_avector(&loc3, (pavector) xt, rb->son[i]->ktree, xtoff);
+	  for (i = 0; i < rsons; i++) {
+	    xt1 =
+	      init_sub_avector(&loc3, (pavector) xt, rb->son[i]->ktree,
+			       xtoff);
 
-	    fastaddevaltrans_otf_h2matrix(alpha, b->son[i+j*rsons], rb->son[i], cb->son[j],
-					  buildN, buildS, data, xt1, yt1);
+	    fastaddevaltrans_otf_h2matrix(alpha, b->son[i + j * rsons],
+					  rb->son[i], cb->son[j], buildN,
+					  buildS, data, xt1, yt1);
 
 	    uninit_avector(xt1);
 
@@ -1165,7 +1174,7 @@ fastaddevaltrans_otf_h2matrix(field alpha,
       }
     }
   }
-  if (b->adm) {
+  else if (b->adm) {
     yt1 = init_sub_avector(&loc2, yt, cb->k, 0);
     xt1 = init_sub_avector(&loc3, (pavector) xt, rb->k, 0);
 
@@ -1208,7 +1217,8 @@ addevaltrans_otf_h2matrix(field alpha,
 
   forward_clusterbasis(rb, x, xt);
 
-  fastaddevaltrans_otf_h2matrix(alpha, b, rb, cb, buildN, buildS, data, xt, yt);
+  fastaddevaltrans_otf_h2matrix(alpha, b, rb, cb, buildN, buildS, data, xt,
+				yt);
 
   backward_clusterbasis(cb, yt, y);
 
@@ -1223,10 +1233,10 @@ addevaltrans_otf_h2matrix(field alpha,
 real
 norm2_h2matrix(pch2matrix G)
 {
-  avector tmp1, tmp2;
-  pavector x, y;
-  real norm;
-  uint i;
+  avector   tmp1, tmp2;
+  pavector  x, y;
+  real      norm;
+  uint      i;
 
   x = init_avector(&tmp1, getcols_h2matrix(G));
   y = init_avector(&tmp2, getrows_h2matrix(G));
@@ -1235,7 +1245,7 @@ norm2_h2matrix(pch2matrix G)
    * the spectral norm */
   random_avector(x);
   norm = norm2_avector(x);
-  for(i=0; i<NORM_STEPS && norm != 0.0; i++) {
+  for (i = 0; i < NORM_STEPS && norm != 0.0; i++) {
     clear_avector(y);
     addeval_h2matrix(1.0, G, x, y);
 
@@ -1244,7 +1254,7 @@ norm2_h2matrix(pch2matrix G)
 
     norm = norm2_avector(x);
   }
-  
+
   uninit_avector(y);
   uninit_avector(x);
 
@@ -1254,10 +1264,10 @@ norm2_h2matrix(pch2matrix G)
 real
 norm2diff_h2matrix(pch2matrix G, pch2matrix H)
 {
-  avector tmp1, tmp2;
-  pavector x, y;
-  real norm;
-  uint i;
+  avector   tmp1, tmp2;
+  pavector  x, y;
+  real      norm;
+  uint      i;
 
   assert(getrows_h2matrix(G) == getrows_h2matrix(H));
   assert(getcols_h2matrix(G) == getcols_h2matrix(H));
@@ -1269,7 +1279,7 @@ norm2diff_h2matrix(pch2matrix G, pch2matrix H)
    * the spectral norm */
   random_avector(x);
   norm = norm2_avector(x);
-  for(i=0; i<NORM_STEPS && norm != 0.0; i++) {
+  for (i = 0; i < NORM_STEPS && norm != 0.0; i++) {
     clear_avector(y);
     addeval_h2matrix(1.0, G, x, y);
     addeval_h2matrix(-1.0, H, x, y);
@@ -1280,7 +1290,7 @@ norm2diff_h2matrix(pch2matrix G, pch2matrix H)
 
     norm = norm2_avector(x);
   }
-  
+
   uninit_avector(y);
   uninit_avector(x);
 

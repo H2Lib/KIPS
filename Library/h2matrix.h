@@ -325,10 +325,11 @@ mvm_h2matrix(field alpha, bool h2trans, pch2matrix h2,
  *  farfield block contributions are accumulated
  *  @f$\hat y_t \gets \hat y_t + S_{t,s} \hat x_s@f$.
  *
- *  Both <tt>xt</tt> and <tt>yt</tt> should be coefficient vectors provided by
- *  @ref new_coeffs_clusterbasis_avector, <tt>xt</tt> is usually initialized by
- *  @ref forward_clusterbasis_avector, while <tt>yt</tt> is typically added to the
- *  result using @ref backward_clusterbasis_avector.
+ *  <tt>xt</tt> and <tt>yt</tt> have to be coefficient vectors of size
+ *  <tt>cb->ktree</tt> and <tt>rb->ktree</tt>, respectively.
+ *  <tt>xt</tt> is usually initialized by @ref forward_clusterbasis,
+ *  while <tt>yt</tt> is typically added to the result using
+ *  @ref backward_clusterbasis.
  *
  *  @param alpha Scaling factor @f$\alpha@f$.
  *  @param h2 Matrix @f$A@f$.
@@ -339,8 +340,8 @@ mvm_h2matrix(field alpha, bool h2trans, pch2matrix h2,
  *            of the target vector with respect to the
  *            row basis <tt>h2->rb</tt>. */
 HEADER_PREFIX void
-fastaddeval_h2matrix_avector(field alpha, pch2matrix h2,
-			     pcavector xt, pavector yt);
+fastaddeval_h2matrix(field alpha, pch2matrix h2,
+		     pcavector xt, pavector yt);
 
 /** @brief Matrix-vector multiplication
  *  @f$y \gets y + \alpha A x@f$.
@@ -362,10 +363,11 @@ addeval_h2matrix(field alpha, pch2matrix h2, pcavector x, pavector y);
  *  farfield block contributions are accumulated
  *  @f$\hat y_s \gets \hat y_s + S_{t,s}^* \hat x_t@f$.
  *
- *  Both <tt>xt</tt> and <tt>yt</tt> should be coefficient vectors provided by
- *  @ref new_coeffs_clusterbasis_avector, <tt>xt</tt> is usually initialized by
- *  @ref forward_clusterbasis_avector, while <tt>yt</tt> is typically added to the
- *  result using @ref backward_clusterbasis_avector.
+ *  <tt>xt</tt> and <tt>yt</tt> have to be coefficient vectors of size
+ *  <tt>rb->ktree</tt> and <tt>cb->ktree</tt>, respectively.
+ *  <tt>xt</tt> is usually initialized by @ref forward_clusterbasis,
+ *  while <tt>yt</tt> is typically added to the result using
+ *  @ref backward_clusterbasis.
  *
  *  @param alpha Scaling factor @f$\alpha@f$.
  *  @param h2 Matrix @f$A@f$.
@@ -409,30 +411,148 @@ addevalsymm_h2matrix_avector(field alpha, pch2matrix h2,
  * On-the-fly matrix-vector multiplication
  * ------------------------------------------------------------ */
 
+/** @brief Matrix-vector multiplication with on-the-fly coupling
+ *  and nearfield matrices
+ *  @f$y \gets y + \alpha A x@f$ or @f$y \gets y + \alpha A^* x@f$.
+ *
+ *  The matrix or its adjoint is multiplied by the source vector @f$x@f$,
+ *  the result is scaled by @f$\alpha@f$ and added to the target vector
+ *  @f$y@f$.
+ *
+ *  The coupling and nearfield matrices are created on the fly
+ *  and immediately disposed of as soon as they have served their
+ *  purpose.
+ *
+ *  @param alpha Scaling factor @f$\alpha@f$.
+ *  @param h2trans Set if @f$A^*@f$ is to be used instead of @f$A@f$.
+ *  @param b Root of the block tree.
+ *  @param rb Row cluster basis.
+ *  @param cb Column cluster basis.
+ *  @param buildN Callback function for inadmissible leaves.
+ *  @param buildS Callback function for admissible leaves.
+ *  @param x Source vector @f$x@f$.
+ *  @param y Target vector @f$y@f$. */
 HEADER_PREFIX void
 mvm_otf_h2matrix(field alpha, bool h2trans,
 		 pcblock b, pcclusterbasis rb, pcclusterbasis cb,
 		 buildN_t buildN, buildS_t buildS, void *data,
 		 pcavector x, pavector y);
 
+/** @brief Interaction phase of the matrix-vector multiplication
+ *  with coupling and nearfield matrices created on the fly.
+ *
+ *  Nearfield blocks are added directly
+ *  @f$y|_{\hat t} \gets y|_{\hat t} + A|_{\hat t\times\hat s} x|_{\hat s}@f$,
+ *  farfield block contributions are accumulated
+ *  @f$\hat y_t \gets \hat y_t + S_{t,s} \hat x_s@f$.
+ *
+ *  The coupling and nearfield matrices are created on the fly
+ *  and immediately disposed of as soon as they have served their
+ *  purpose.
+ *
+ *  <tt>xt</tt> and <tt>yt</tt> have to be coefficient vectors of size
+ *  <tt>cb->ktree</tt> and <tt>rb->ktree</tt>, respectively.
+ *  <tt>xt</tt> is usually initialized by @ref forward_clusterbasis,
+ *  while <tt>yt</tt> is typically added to the result using
+ *  @ref backward_clusterbasis.
+ *
+ *  @param alpha Scaling factor @f$\alpha@f$.
+ *  @param b Root of the block tree.
+ *  @param rb Row cluster basis.
+ *  @param cb Column cluster basis.
+ *  @param buildN Callback function for inadmissible leaves.
+ *  @param buildS Callback function for admissible leaves.
+ *  @param xt Coefficients @f$(\hat x_s)_{s\in\mathcal{T}_{\mathcal J}}@f$
+ *            of the source vector with respect to the
+ *            column basis <tt>h2->cb</tt>.
+ *  @param yt Coefficients @f$(\hat y_t)_{t\in\mathcal{T}_{\mathcal I}}@f$
+ *            of the target vector with respect to the
+ *            row basis <tt>h2->rb</tt>. */
 HEADER_PREFIX void
 fastaddeval_otf_h2matrix(field alpha,
 			 pcblock b, pcclusterbasis rb, pcclusterbasis cb,
 			 buildN_t buildN, buildS_t buildS, void *data,
 			 pcavector xt, pavector yt);
 
+/** @brief Matrix-vector multiplication with on-the-fly coupling
+ *  and nearfield matrices, @f$y \gets y + \alpha A x@f$
+ *
+ *  The matrix is multiplied by the source vector @f$x@f$, the result is
+ *  scaled by @f$\alpha@f$ and added to the target vector @f$y@f$.
+ *
+ *  The coupling and nearfield matrices are created on the fly
+ *  and immediately disposed of as soon as they have served their
+ *  purpose.
+ *
+ *  @param alpha Scaling factor @f$\alpha@f$.
+ *  @param b Root of the block tree.
+ *  @param rb Row cluster basis.
+ *  @param cb Column cluster basis.
+ *  @param buildN Callback function for inadmissible leaves.
+ *  @param buildS Callback function for admissible leaves.
+ *  @param x Source vector @f$x@f$.
+ *  @param y Target vector @f$y@f$. */
 HEADER_PREFIX void
 addeval_otf_h2matrix(field alpha,
 		     pcblock b, pcclusterbasis rb, pcclusterbasis cb,
 		     buildN_t buildN, buildS_t buildS, void *data,
 		     pcavector x, pavector y);
 
+/** @brief Interaction phase of the adjoint matrix-vector multiplication
+ *  with coupling and nearfield matrices created on the fly.
+ *
+ *  Nearfield blocks are added directly
+ *  @f$y|_{\hat s} \gets y|_{\hat s} + A|_{\hat t\times\hat s}^* x|_{\hat t}@f$,
+ *  farfield block contributions are accumulated
+ *  @f$\hat y_s \gets \hat y_s + S_{t,s}^* \hat x_t@f$.
+ *
+ *  The coupling and nearfield matrices are created on the fly
+ *  and immediately disposed of as soon as they have served their
+ *  purpose.
+ *
+ *  <tt>xt</tt> and <tt>yt</tt> have to be coefficient vectors of
+ *  size <tt>rb->ktree</tt> and <tt>cb->ktree</tt>, respectively.
+ *  <tt>xt</tt> is usually initialized by @ref forward_clusterbasis,
+ *  while <tt>yt</tt> is typically added to the result using
+ *  @ref backward_clusterbasis.
+ *
+ *  @param alpha Scaling factor @f$\alpha@f$.
+ *  @param b Root of the block tree.
+ *  @param rb Row cluster basis.
+ *  @param cb Column cluster basis.
+ *  @param buildN Callback function for inadmissible leaves.
+ *  @param buildS Callback function for admissible leaves.
+ *  @param xt Coefficients @f$(\hat x_s)_{s\in\mathcal{T}_{\mathcal J}}@f$
+ *            of the source vector with respect to the
+ *            column basis <tt>h2->cb</tt>.
+ *  @param yt Coefficients @f$(\hat y_t)_{t\in\mathcal{T}_{\mathcal I}}@f$
+ *            of the target vector with respect to the
+ *            row basis <tt>h2->rb</tt>. */
 HEADER_PREFIX void
 fastaddevaltrans_otf_h2matrix(field alpha,
 			      pcblock b, pcclusterbasis rb, pcclusterbasis cb,
 			      buildN_t buildN, buildS_t buildS, void *data,
 			      pcavector xt, pavector yt);
 
+/** @brief Adjoint matrix-vector multiplication with on-the-fly coupling
+ *  and nearfield matrices, @f$y \gets y + \alpha A^* x@f$.
+ *
+ *  The adjoint matrix is multiplied by the source vector @f$x@f$,
+ *  the result is scaled by @f$\alpha@f$ and added to the target vector
+ *  @f$y@f$.
+ *
+ *  The coupling and nearfield matrices are created on the fly
+ *  and immediately disposed of as soon as they have served their
+ *  purpose.
+ *
+ *  @param alpha Scaling factor @f$\alpha@f$.
+ *  @param b Root of the block tree.
+ *  @param rb Row cluster basis.
+ *  @param cb Column cluster basis.
+ *  @param buildN Callback function for inadmissible leaves.
+ *  @param buildS Callback function for admissible leaves.
+ *  @param x Source vector @f$x@f$.
+ *  @param y Target vector @f$y@f$. */
 HEADER_PREFIX void
 addevaltrans_otf_h2matrix(field alpha,
 			  pcblock b, pcclusterbasis rb, pcclusterbasis cb,

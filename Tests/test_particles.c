@@ -18,21 +18,21 @@ main(int argc, char **argv)
 {
   pparticles p;
   pclustergeometry cg;
-  uint *idx;
-  pcluster root;
-  pblock broot;
+  uint     *idx;
+  pcluster  root;
+  pblock    broot;
   pclusterbasis cb;
   ph2matrix G;
-  pavector src, trg;
-  pamatrix V, V1, Vson, E;
+  pavector  src, trg;
+  pamatrix  V, V1, Vson, E;
   pstopwatch sw;
-  real norm, error;
-  real t_run;
-  uint problems = 0;
-  size_t sz;
-  uint n, m, res;
-  field alpha;
-  uint i, off;
+  real      norm, error;
+  real      t_run;
+  uint      problems = 0;
+  size_t    sz;
+  uint      n, m, res;
+  field     alpha;
+  uint      i, off;
 
   init_kips(&argc, &argv);
 
@@ -51,28 +51,26 @@ main(int argc, char **argv)
   (void) printf("Setting up cluster tree, resolution %u\n", res);
   cg = buildgeometry_particles(p);
   idx = (uint *) allocmem(sizeof(uint) * n);
-  for(i=0; i<n; i++)
+  for (i = 0; i < n; i++)
     idx[i] = i;
-  root = buildgeometric_clustergeometry(cg, 100, 2*m*m*m, n, idx);
+  root = buildgeometric_clustergeometry(cg, 100, 2 * m * m * m, n, idx);
   (void) printf("  %u clusters\n"
-		"  %u levels\n",
-		root->desc,
-		getdepth_cluster(root) + 1);
+		"  %u levels\n", root->desc, getdepth_cluster(root) + 1);
 
   (void) printf("Creating V matrix for the root\n");
-  V = new_amatrix(root->size, m*m*m);
+  V = new_amatrix(root->size, m * m * m);
   buildV_particles(p, root, V);
   norm = normfrob_amatrix(V);
 
-  if(root->sons > 0) {
+  if (root->sons > 0) {
     (void) printf("Subtracting V E for the sons\n");
     off = 0;
-    for(i=0; i<root->sons; i++) {
-      V1 = new_sub_amatrix(V, root->son[i]->size, off, m*m*m, 0);
-      Vson = new_amatrix(root->son[i]->size, m*m*m);
+    for (i = 0; i < root->sons; i++) {
+      V1 = new_sub_amatrix(V, root->son[i]->size, off, m * m * m, 0);
+      Vson = new_amatrix(root->son[i]->size, m * m * m);
       buildV_particles(p, root->son[i], Vson);
 
-      E = new_amatrix(m*m*m, m*m*m);
+      E = new_amatrix(m * m * m, m * m * m);
       buildE_particles(p, root->son[i], root, E);
       addmul_amatrix(-1.0, false, Vson, false, E, V1);
 
@@ -85,9 +83,8 @@ main(int argc, char **argv)
     assert(off == root->size);
 
     error = normfrob_amatrix(V);
-    (void) printf("  Error %.3e (%.3e)",
-		  error, error / norm);
-    if(error <= tolerance * norm)
+    (void) printf("  Error %.3e (%.3e)", error, error / norm);
+    if (error <= tolerance * norm)
       (void) printf("  --  Okay\n");
     else {
       (void) printf("  --  NOT Okay\a\n");
@@ -99,37 +96,30 @@ main(int argc, char **argv)
   (void) printf("Setting up block tree\n");
   broot = buildh2std_block(root, root, 2.0);
   (void) printf("  %u blocks\n"
-		"  %u levels\n",
-		broot->desc,
-		getdepth_block(broot) + 1);
+		"  %u levels\n", broot->desc, getdepth_block(broot) + 1);
 
   (void) printf("Setting up Lagrange cluster basis\n");
   start_stopwatch(sw);
   cb = build_fromcluster_clusterbasis(root);
   fill_clusterbasis((buildV_t) buildV_particles,
-		    (buildE_t) buildE_particles,
-		    p, cb);
+		    (buildE_t) buildE_particles, p, cb);
   t_run = stop_stopwatch(sw);
   sz = getsize_clusterbasis(cb);
   (void) printf("  %.1f seconds\n"
 		"  %.2f MB (%.1f KB/DoF)\n"
 		"  k %u, ktree %u\n",
-		t_run,
-		sz / 1048576.0, sz / 1024.0 / n,
-		cb->k, cb->ktree);
+		t_run, sz / 1048576.0, sz / 1024.0 / n, cb->k, cb->ktree);
 
   (void) printf("Setting up H2-matrix\n");
   start_stopwatch(sw);
   G = build_fromblock_h2matrix(broot, cb, cb);
   fill_h2matrix((buildN_t) buildN_particles,
-		(buildS_t) buildS_particles,
-		p, G);
+		(buildS_t) buildS_particles, p, G);
   t_run = stop_stopwatch(sw);
   sz = getsize_h2matrix(G);
   (void) printf("  %.1f seconds\n"
 		"  %.2f MB (%.1f KB/DoF)\n",
-		t_run,
-		sz / 1048576.0, sz / 1024.0 / n);
+		t_run, sz / 1048576.0, sz / 1024.0 / n);
 
   (void) printf("Testing approximation\n");
   src = new_avector(n);
@@ -143,21 +133,17 @@ main(int argc, char **argv)
   addeval_direct_particles(alpha, p, src, trg);
   t_run = stop_stopwatch(sw);
   norm = norm2_avector(trg);
-  (void) printf("  %.2f seconds\n"
-		"  Norm %.3e\n",
-		t_run, norm);
-  
+  (void) printf("  %.2f seconds\n" "  Norm %.3e\n", t_run, norm);
+
   (void) printf("  H^2-matrix evaluation\n");
   start_stopwatch(sw);
   addeval_h2matrix(-alpha, G, src, trg);
   t_run = stop_stopwatch(sw);
   error = norm2_avector(trg);
   (void) printf("  %.2f seconds\n"
-		"  Error %.3e (%.3e)",
-		t_run,
-		error, error / norm);
+		"  Error %.3e (%.3e)", t_run, error, error / norm);
 
-  if(error <= 15.0 * pow(0.125, m) * norm)
+  if (error <= 15.0 * pow(0.125, m) * norm)
     (void) printf("  --  Okay\n");
   else {
     (void) printf("  --  NOT Okay\a\n");
@@ -167,17 +153,23 @@ main(int argc, char **argv)
   (void) printf("Testing on-the-fly H^2-matrix evaluation\n");
   random_avector(src);
   clear_avector(trg);
+  start_stopwatch(sw);
   addeval_h2matrix(alpha, G, src, trg);
+  t_run = stop_stopwatch(sw);
   norm = norm2_avector(trg);
-  (void) printf("  Norm %.3e\n", norm);
+  (void) printf("  %.2f seconds\n"
+		"  Norm %.3e\n",
+		t_run, norm);
+  start_stopwatch(sw);
   addeval_otf_h2matrix(-alpha, broot, cb, cb,
 		       (buildN_t) buildN_particles,
-		       (buildS_t) buildS_particles, p,
-		       src, trg);
+		       (buildS_t) buildS_particles, p, src, trg);
+  t_run = stop_stopwatch(sw);
   error = norm2_avector(trg);
-  (void) printf("  Error %.3e (%.3e)",
-		error, error / norm);
-  if(error <= tolerance * norm)
+  (void) printf("  %.2f seconds\n"
+		"  Error %.3e (%.3e)",
+		t_run, error, error / norm);
+  if (error <= tolerance * norm)
     (void) printf("  --  Okay\n");
   else {
     (void) printf("  --  NOT Okay\a\n");
@@ -187,17 +179,23 @@ main(int argc, char **argv)
   (void) printf("Testing on-the-fly adjoint H^2-matrix evaluation\n");
   random_avector(src);
   clear_avector(trg);
+  start_stopwatch(sw);
   addevaltrans_h2matrix(alpha, G, src, trg);
+  t_run = stop_stopwatch(sw);
   norm = norm2_avector(trg);
-  (void) printf("  Norm %.3e\n", norm);
+  (void) printf("  %.2f seconds\n"
+		"  Norm %.3e\n",
+		t_run, norm);
+  start_stopwatch(sw);
   addevaltrans_otf_h2matrix(-alpha, broot, cb, cb,
 			    (buildN_t) buildN_particles,
-			    (buildS_t) buildS_particles, p,
-			    src, trg);
+			    (buildS_t) buildS_particles, p, src, trg);
+  t_run = stop_stopwatch(sw);
   error = norm2_avector(trg);
-  (void) printf("  Error %.3e (%.3e)",
-		error, error / norm);
-  if(error <= tolerance * norm)
+  (void) printf("  %.2f seconds\n"
+		"  Error %.3e (%.3e)",
+		t_run, error, error / norm);
+  if (error <= tolerance * norm)
     (void) printf("  --  Okay\n");
   else {
     (void) printf("  --  NOT Okay\a\n");
@@ -213,9 +211,7 @@ main(int argc, char **argv)
 		"  %u matrices and\n"
 		"  %u vectors still active\n"
 		"  %u errors found\n",
-		getactives_amatrix(),
-		getactives_avector(),
-		problems);
+		getactives_amatrix(), getactives_avector(), problems);
 
   uninit_kips();
 
