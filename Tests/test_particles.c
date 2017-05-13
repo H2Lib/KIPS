@@ -26,7 +26,7 @@ main(int argc, char **argv)
   pavector  src, trg;
   pamatrix  V, V1, Vson, E;
   pstopwatch sw;
-  real      norm, error;
+  real      norm, error, tol_interpolation;
   real      t_run;
   uint      problems = 0;
   size_t    sz;
@@ -140,10 +140,16 @@ main(int argc, char **argv)
   addeval_h2matrix(-alpha, G, src, trg);
   t_run = stop_stopwatch(sw);
   error = norm2_avector(trg);
-  (void) printf("  %.2f seconds\n"
-		"  Error %.3e (%.3e)", t_run, error, error / norm);
+  
+  tol_interpolation = 1e-3 * pow(0.16, m) * n * norm;
 
-  if (error <= 15.0 * pow(0.125, m) * norm)
+  (void) printf("  %.2f seconds\n"
+		"  Error tolerance %.3e\n"
+		"  Error %.3e (%.3e)",
+		t_run, tol_interpolation,
+		error, error / norm);
+
+  if (error <= tol_interpolation)
     (void) printf("  --  Okay\n");
   else {
     (void) printf("  --  NOT Okay\a\n");
