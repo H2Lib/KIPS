@@ -58,20 +58,6 @@ ifdef USE_BLAS
 endif
 
 #
-# SIMD
-#
-ifdef USE_SIMD
-  CFLAGS += -DUSE_SIMD
-endif
-
-#
-# Triquadpoints
-#
-ifdef USE_TRIQUADPOINTS
-  CFLAGS += -DUSE_TRIQUADPOINTS
-endif
-
-#
 # Cairo graphics
 #
 ifdef USE_CAIRO
@@ -85,14 +71,6 @@ endif
 ifdef USE_OPENMP
   CFLAGS += -DUSE_OPENMP -fopenmp
   LDFLAGS += -fopenmp
-endif
-
-#
-# OpenCL heterogeneous programming
-#
-ifdef USE_OPENCL
-  CFLAGS += -DUSE_OPENCL -I/usr/local/cuda/include
-  LIBS += -lOpenCL
 endif
 
 #
