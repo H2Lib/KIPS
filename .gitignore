@@ -34,6 +34,9 @@ Tests/test_particles
 *.x86_64
 *.hex
 
+# Custom configuration files
+options.inc
+
 # Debug files
 *.dSYM/
 *.su
