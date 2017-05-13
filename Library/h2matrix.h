@@ -406,6 +406,40 @@ addevalsymm_h2matrix_avector(field alpha, pch2matrix h2,
 			     pcavector x, pavector y);
 
 /* ------------------------------------------------------------
+ * On-the-fly matrix-vector multiplication
+ * ------------------------------------------------------------ */
+
+HEADER_PREFIX void
+mvm_otf_h2matrix(field alpha, bool h2trans,
+		 pcblock b, pcclusterbasis rb, pcclusterbasis cb,
+		 buildN_t buildN, buildS_t buildS, void *data,
+		 pcavector x, pavector y);
+
+HEADER_PREFIX void
+fastaddeval_otf_h2matrix(field alpha,
+			 pcblock b, pcclusterbasis rb, pcclusterbasis cb,
+			 buildN_t buildN, buildS_t buildS, void *data,
+			 pcavector xt, pavector yt);
+
+HEADER_PREFIX void
+addeval_otf_h2matrix(field alpha,
+		     pcblock b, pcclusterbasis rb, pcclusterbasis cb,
+		     buildN_t buildN, buildS_t buildS, void *data,
+		     pcavector x, pavector y);
+
+HEADER_PREFIX void
+fastaddevaltrans_otf_h2matrix(field alpha,
+			      pcblock b, pcclusterbasis rb, pcclusterbasis cb,
+			      buildN_t buildN, buildS_t buildS, void *data,
+			      pcavector xt, pavector yt);
+
+HEADER_PREFIX void
+addevaltrans_otf_h2matrix(field alpha,
+			  pcblock b, pcclusterbasis rb, pcclusterbasis cb,
+			  buildN_t buildN, buildS_t buildS, void *data,
+			  pcavector x, pavector y);
+
+/* ------------------------------------------------------------
  * Spectral norm
  * ------------------------------------------------------------ */
 

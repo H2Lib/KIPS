@@ -164,6 +164,46 @@ main(int argc, char **argv)
     problems++;
   }
 
+  (void) printf("Testing on-the-fly H^2-matrix evaluation\n");
+  random_avector(src);
+  clear_avector(trg);
+  addeval_h2matrix(alpha, G, src, trg);
+  norm = norm2_avector(trg);
+  (void) printf("  Norm %.3e\n", norm);
+  addeval_otf_h2matrix(-alpha, broot, cb, cb,
+		       (buildN_t) buildN_particles,
+		       (buildS_t) buildS_particles, p,
+		       src, trg);
+  error = norm2_avector(trg);
+  (void) printf("  Error %.3e (%.3e)",
+		error, error / norm);
+  if(error <= tolerance * norm)
+    (void) printf("  --  Okay\n");
+  else {
+    (void) printf("  --  NOT Okay\a\n");
+    problems++;
+  }
+
+  (void) printf("Testing on-the-fly adjoint H^2-matrix evaluation\n");
+  random_avector(src);
+  clear_avector(trg);
+  addevaltrans_h2matrix(alpha, G, src, trg);
+  norm = norm2_avector(trg);
+  (void) printf("  Norm %.3e\n", norm);
+  addevaltrans_otf_h2matrix(-alpha, broot, cb, cb,
+			    (buildN_t) buildN_particles,
+			    (buildS_t) buildS_particles, p,
+			    src, trg);
+  error = norm2_avector(trg);
+  (void) printf("  Error %.3e (%.3e)",
+		error, error / norm);
+  if(error <= tolerance * norm)
+    (void) printf("  --  Okay\n");
+  else {
+    (void) printf("  --  NOT Okay\a\n");
+    problems++;
+  }
+
   del_avector(trg);
   del_avector(src);
   del_h2matrix(G);
