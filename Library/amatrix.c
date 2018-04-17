@@ -613,7 +613,9 @@ norm2_amatrix(pcamatrix A)
    * the spectral norm */
   random_avector(x);
   norm = norm2_avector(x);
-  for(i=0; i<NORM_STEPS && norm != 0.0; i++) {
+  for(i=0; i<NORM_STEPS && norm > 0.0; i++) {
+    scale_avector(1.0 / norm, x);
+
     clear_avector(y);
     addeval_amatrix(1.0, A, x, y);
 
@@ -661,7 +663,9 @@ norm2diff_amatrix(pcamatrix A, pcamatrix B)
    * the spectral norm */
   random_avector(x);
   norm = norm2_avector(x);
-  for(i=0; i<NORM_STEPS && norm != 0.0; i++) {
+  for(i=0; i<NORM_STEPS && norm > 0.0; i++) {
+    scale_avector(1.0 / norm, x);
+
     clear_avector(y);
     addeval_amatrix(1.0, A, x, y);
     addeval_amatrix(-1.0, B, x, y);

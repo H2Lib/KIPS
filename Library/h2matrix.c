@@ -1245,7 +1245,9 @@ norm2_h2matrix(pch2matrix G)
    * the spectral norm */
   random_avector(x);
   norm = norm2_avector(x);
-  for (i = 0; i < NORM_STEPS && norm != 0.0; i++) {
+  for (i = 0; i < NORM_STEPS && norm > 0.0; i++) {
+    scale_avector(1.0 / norm, x);
+
     clear_avector(y);
     addeval_h2matrix(1.0, G, x, y);
 
@@ -1279,7 +1281,9 @@ norm2diff_h2matrix(pch2matrix G, pch2matrix H)
    * the spectral norm */
   random_avector(x);
   norm = norm2_avector(x);
-  for (i = 0; i < NORM_STEPS && norm != 0.0; i++) {
+  for (i = 0; i < NORM_STEPS && norm > 0.0; i++) {
+    scale_avector(1.0 / norm, x);
+
     clear_avector(y);
     addeval_h2matrix(1.0, G, x, y);
     addeval_h2matrix(-1.0, H, x, y);
