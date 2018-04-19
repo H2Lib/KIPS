@@ -12,6 +12,7 @@ typedef cluster *pcluster;
 typedef const cluster *pccluster;
 
 #include "settings.h"
+#include "clustergeometry.h"
 #include <stdlib.h>
 
 struct _cluster
@@ -54,6 +55,9 @@ diam_cluster(pccluster t);
 
 HEADER_PREFIX real
 dist_cluster(pccluster t, pccluster s);
+
+HEADER_PREFIX real
+getmindiam_cluster(pccluster t);
 
 /* ------------------------------------------------------------
    Statistics

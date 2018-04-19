@@ -1231,74 +1231,26 @@ addevaltrans_otf_h2matrix(field alpha,
  * ------------------------------------------------------------ */
 
 real
-norm2_h2matrix(pch2matrix G)
+norm2_h2matrix(pch2matrix H2)
 {
-  avector   tmp1, tmp2;
-  pavector  x, y;
-  real      norm;
-  uint      i;
-
-  x = init_avector(&tmp1, getcols_h2matrix(G));
-  y = init_avector(&tmp2, getrows_h2matrix(G));
-
-  /* Apply power iteration to G^* G to estimate
-   * the spectral norm */
-  random_avector(x);
-  norm = norm2_avector(x);
-  for (i = 0; i < NORM_STEPS && norm > 0.0; i++) {
-    scale_avector(1.0 / norm, x);
-
-    clear_avector(y);
-    addeval_h2matrix(1.0, G, x, y);
-
-    clear_avector(x);
-    addevaltrans_h2matrix(1.0, G, y, x);
-
-    norm = norm2_avector(x);
-  }
-
-  uninit_avector(y);
-  uninit_avector(x);
-
-  return REAL_SQRT(norm);
+  return norm2_matrix((mvm_t) mvm_h2matrix, (void *) H2,
+		      H2->rb->t->size, H2->cb->t->size);
 }
 
 real
-norm2diff_h2matrix(pch2matrix G, pch2matrix H)
+norm2diff_h2matrix(pch2matrix a, pch2matrix b)
 {
-  avector   tmp1, tmp2;
-  pavector  x, y;
-  real      norm;
-  uint      i;
+  return norm2diff_matrix((mvm_t) mvm_h2matrix, (void *) a,
+			  (mvm_t) mvm_h2matrix, (void *) b,
+			  a->rb->t->size, a->cb->t->size);
+}
 
-  assert(getrows_h2matrix(G) == getrows_h2matrix(H));
-  assert(getcols_h2matrix(G) == getcols_h2matrix(H));
-
-  x = init_avector(&tmp1, getcols_h2matrix(G));
-  y = init_avector(&tmp2, getrows_h2matrix(G));
-
-  /* Apply power iteration to (G-H)^* (G-H) to estimate
-   * the spectral norm */
-  random_avector(x);
-  norm = norm2_avector(x);
-  for (i = 0; i < NORM_STEPS && norm > 0.0; i++) {
-    scale_avector(1.0 / norm, x);
-
-    clear_avector(y);
-    addeval_h2matrix(1.0, G, x, y);
-    addeval_h2matrix(-1.0, H, x, y);
-
-    clear_avector(x);
-    addevaltrans_h2matrix(1.0, G, y, x);
-    addevaltrans_h2matrix(-1.0, H, y, x);
-
-    norm = norm2_avector(x);
-  }
-
-  uninit_avector(y);
-  uninit_avector(x);
-
-  return REAL_SQRT(norm);
+real
+norm2diff_amatrix_h2matrix(pch2matrix a, pcamatrix b)
+{
+  return norm2diff_matrix((mvm_t) mvm_h2matrix, (void *) a,
+			  (mvm_t) mvm_amatrix, (void *) b,
+			  a->rb->t->size, a->cb->t->size);
 }
 
 /* ------------------------------------------------------------

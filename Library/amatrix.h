@@ -53,6 +53,26 @@ struct _amatrix {
   void *owner;
 };
 
+/** @brief Matrix callback.
+ *
+ *  Used to evaluate the system matrix @f$A@f$ or its adjoint,
+ *  i.e., to perform @f$y \gets y + \alpha A x@f$.
+ *
+ *  Compared to @ref addeval_t, callbacks of this type allow us
+ *  to evaluate both the matrix and its adjoint.
+ *
+ *  Functions like @ref mvm_amatrix_avector,
+ *  @ref mvm_hmatrix_avector, @ref mvm_h2matrix_avector, or
+ *  @ref mvm_sparsematrix_avector can be cast to <tt>mvm_t</tt>.
+ *
+ *  @param alpha Scaling factor @f$\alpha@f$.
+ *  @param trans Set if @f$A^*@f$ is to be used instead of @f$A@f$.
+ *  @param matrix Matrix data describing @f$A@f$.
+ *  @param x Source vector @f$x@f$.
+ *  @param y Target vector @f$y@f$. */
+typedef void (*mvm_t)(field alpha, bool trans, void *matrix, pcavector x,
+    pavector y);
+
 /* ------------------------------------------------------------ *
  * Constructors and destructors                                 *
  * ------------------------------------------------------------ */
@@ -447,17 +467,6 @@ scale_amatrix(field alpha, pamatrix A);
 HEADER_PREFIX field
 dotprod_amatrix(pcamatrix A, pcamatrix B);
 
-/** @brief Approximate the spectral norm @f$\|A\|_2@f$ of a matrix @f$A@f$.
- *
- *  The spectral norm is approximated by applying a few steps of the power
- *  iteration to the matrix @f$A^* A@f$ and computing the square root of
- *  the resulting eigenvalue approximation.
- *
- *  @param A Dense matrix @f$A@f$.
- *  @returns Approximation of @f$\|A\|_2@f$. */
-HEADER_PREFIX real
-norm2_amatrix(pcamatrix A);
-
 /** @brief Compute the Frobenius norm @f$\|A\|_F@f$ of a matrix @f$A@f$.
  *
  *  The Frobenius norm is given by
@@ -467,19 +476,6 @@ norm2_amatrix(pcamatrix A);
  *  @returns Frobenius norm @f$\|A\|_F@f$. */
 HEADER_PREFIX real
 normfrob_amatrix(pcamatrix A);
-
-/** @brief Approximate the spectral norm @f$\|A-B\|_2@f$ of the difference
- *  of two matrices @f$A@f$ and @f$B@f$.
- *
- *  The spectral norm is approximated by applying a few steps of the power
- *  iteration to the matrix @f$(A-B)^* (A-B)@f$ and computing the square root
- *  of the resulting eigenvalue approximation.
- *
- *  @param A Dense matrix @f$A@f$.
- *  @param B Dense matrix @f$B@f$.
- *  @returns Approximation of @f$\|A-B\|_2@f$. */
-HEADER_PREFIX real
-norm2diff_amatrix(pcamatrix A, pcamatrix B);
 
 /** @brief Multiply a matrix @f$A@f$ by a vector @f$x@f$,
  *  @f$y \gets y + \alpha A x@f$.
@@ -554,6 +550,61 @@ add_amatrix(field alpha, bool transA, pcamatrix A, pamatrix B);
 HEADER_PREFIX void
 addmul_amatrix(field alpha, bool transA, pcamatrix A,
 	       bool transB, pcamatrix B, pamatrix C);
+
+/** @brief Approximate the spectral norm @f$\|A\|_2@f$ of a matrix @f$A@f$.
+ *
+ *  The spectral norm is approximated by applying a few steps of the power
+ *  iteration to the matrix @f$A^* A@f$ and computing the square root of
+ *  the resulting eigenvalue approximation.
+ *
+ *  @param mvm Callback function for evaluating @p A and its adjoint.
+ *  @param A Matrix @f$A@f$.
+ *  @param rows Number of rows of @p A.
+ *  @param cols Number of columns of @p A.
+ *  @returns Approximation of @f$\|A\|_2@f$. */
+HEADER_PREFIX real
+norm2_matrix(mvm_t mvm, void *A, uint rows, uint cols);
+
+/** @brief Approximate the spectral norm @f$\|A\|_2@f$ of a matrix @f$A@f$.
+ *
+ *  The spectral norm is approximated by applying a few steps of the power
+ *  iteration to the matrix @f$A^* A@f$ and computing the square root of
+ *  the resulting eigenvalue approximation.
+ *
+ *  @param A Dense matrix @f$A@f$.
+ *  @returns Approximation of @f$\|A\|_2@f$. */
+HEADER_PREFIX real
+norm2_amatrix(pcamatrix A);
+
+/** @brief Approximate the spectral norm @f$\|A-B\|_2@f$ of the difference
+ *  of two matrices @f$A@f$ and @f$B@f$.
+ *
+ *  The spectral norm is approximated by applying a few steps of the power
+ *  iteration to the matrix @f$(A-B)^* (A-B)@f$ and computing the square root
+ *  of the resulting eigenvalue approximation.
+ *
+ *  @param mvmA Callback function for evaluating @p A and its adjoint.
+ *  @param A Matrix @f$A@f$.
+ *  @param mvmB Callback function for evaluating @p B and its adjoint.
+ *  @param B Matrix @f$B@f$.
+ *  @param rows Number of rows of either @p A and @p B.
+ *  @param cols Number of columns of either @p A and @p B.
+ *  @returns Approximation of @f$\|A-B\|_2@f$. */
+HEADER_PREFIX real
+norm2diff_matrix(mvm_t mvmA, void *A, mvm_t mvmB, void *B, uint rows, uint cols);
+
+/** @brief Approximate the spectral norm @f$\|A-B\|_2@f$ of the difference
+ *  of two matrices @f$A@f$ and @f$B@f$.
+ *
+ *  The spectral norm is approximated by applying a few steps of the power
+ *  iteration to the matrix @f$(A-B)^* (A-B)@f$ and computing the square root
+ *  of the resulting eigenvalue approximation.
+ *
+ *  @param a Dense matrix @f$A@f$.
+ *  @param b Dense matrix @f$B@f$.
+ *  @returns Approximation of @f$\|A-B\|_2@f$. */
+HEADER_PREFIX real
+norm2diff_amatrix(pcamatrix a, pcamatrix b);
 
 /** @} */
 

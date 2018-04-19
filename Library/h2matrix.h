@@ -36,6 +36,7 @@ typedef const h2matrix *pch2matrix;
 #include "uniform.h"
 #include "clusterbasis.h"
 #include "settings.h"
+#include "basic.h"
 
 /** @brief Callback function for inadmissible leaves. */
 typedef void (*buildN_t)(void *, const uint *, const uint *, pamatrix);
@@ -587,6 +588,18 @@ norm2_h2matrix(pch2matrix H2);
 HEADER_PREFIX real
 norm2diff_h2matrix(pch2matrix a, pch2matrix b);
 
+/** @brief Approximate the spectral norm @f$\|A-B\|_2@f$ of the difference
+ *  of two matrices @f$A@f$ and @f$B@f$.
+ *
+ *  The spectral norm is approximated by applying a few steps of the power
+ *  iteration to the matrix @f$(A-B)^* (A-B)@f$ and computing the square root
+ *  of the resulting eigenvalue approximation.
+ *
+ *  @param a @f$\mathcal H^2@f$ matrix @f$A@f$.
+ *  @param b Dense matrix @f$B@f$.
+ *  @returns Approximation of @f$\|A-B\|_2@f$. */
+HEADER_PREFIX real
+norm2diff_amatrix_h2matrix(pch2matrix a, pcamatrix b);
 /* ------------------------------------------------------------
  * Drawing
  * ------------------------------------------------------------ */

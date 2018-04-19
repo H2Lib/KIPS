@@ -12,7 +12,8 @@ KIPS_CORE0 = \
 KIPS_CORE1 = \
 	Library/avector.c \
 	Library/rvector.c \
-	Library/amatrix.c
+	Library/amatrix.c \
+	Library/eigensolvers.c \
 
 KIPS_CORE2 = \
 	Library/cluster.c \
@@ -21,8 +22,9 @@ KIPS_CORE2 = \
 	Library/clustergeometry.c \
 	Library/uniform.c \
 	Library/h2matrix.c \
-	Library/particles.c
-
+	Library/particles.c \
+	Library/kernelmatrix.c
+	
 SOURCES_libkips := \
 	$(KIPS_CORE0) \
 	$(KIPS_CORE1) \
@@ -43,7 +45,8 @@ DEPENDENCIES_libkips := $(SOURCES_libkips:.c=.d)
 SOURCES_stable := \
 	Tests/test_amatrix.c \
 	Tests/test_interpolation.c \
-	Tests/test_particles.c
+	Tests/test_particles.c \
+	Tests/test_kernelmatrix.c
 
 SOURCES_tests = \
 	$(SOURCES_stable)

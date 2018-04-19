@@ -140,6 +140,26 @@ dist_cluster(pccluster t, pccluster s)
   return REAL_SQRT(dist2);
 }
 
+real
+getmindiam_cluster(pccluster t)
+{
+  real mindiam;
+  uint i;
+  
+  if(t->sons > 0) {
+    mindiam = getmindiam_cluster(t->son[0]);
+    for(i=1; i<t->sons; i++)
+      mindiam = REAL_MIN(mindiam, getmindiam_cluster(t->son[i]));
+  }
+  else {
+    mindiam = t->bmax[0] - t->bmin[0];
+    for(i=1; i<t->dim; i++)
+      mindiam = REAL_MIN(mindiam, t->bmax[i] - t->bmin[i]);
+  }
+
+  return mindiam;
+}
+
 /* ------------------------------------------------------------
  * Statistics
  * ------------------------------------------------------------ */

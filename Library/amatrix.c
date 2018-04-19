@@ -599,39 +599,6 @@ dotprod_amatrix(pcamatrix A, pcamatrix B)
 }
 
 real
-norm2_amatrix(pcamatrix A)
-{
-  avector tmp1, tmp2;
-  pavector x, y;
-  real norm;
-  uint i;
-
-  x = init_avector(&tmp1, A->cols);
-  y = init_avector(&tmp2, A->rows);
-
-  /* Apply power iteration to A^* A to estimate
-   * the spectral norm */
-  random_avector(x);
-  norm = norm2_avector(x);
-  for(i=0; i<NORM_STEPS && norm > 0.0; i++) {
-    scale_avector(1.0 / norm, x);
-
-    clear_avector(y);
-    addeval_amatrix(1.0, A, x, y);
-
-    clear_avector(x);
-    addevaltrans_amatrix(1.0, A, y, x);
-
-    norm = norm2_avector(x);
-  }
-
-  uninit_avector(y);
-  uninit_avector(x);
-
-  return REAL_SQRT(norm);
-}
-
-real
 normfrob_amatrix(pcamatrix A)
 {
   real      sum;
@@ -643,44 +610,6 @@ normfrob_amatrix(pcamatrix A)
     sum += REAL_SQR(nrm2(A->rows, A->a + j * ldA, 1));
 
   return REAL_SQRT(sum);
-}
-
-real
-norm2diff_amatrix(pcamatrix A, pcamatrix B)
-{
-  avector tmp1, tmp2;
-  pavector x, y;
-  real norm;
-  uint i;
-
-  assert(A->rows == B->rows);
-  assert(A->cols == B->cols);
-
-  x = init_avector(&tmp1, A->cols);
-  y = init_avector(&tmp2, A->rows);
-
-  /* Apply power iteration to (A-B)^* (A-B) to estimate
-   * the spectral norm */
-  random_avector(x);
-  norm = norm2_avector(x);
-  for(i=0; i<NORM_STEPS && norm > 0.0; i++) {
-    scale_avector(1.0 / norm, x);
-
-    clear_avector(y);
-    addeval_amatrix(1.0, A, x, y);
-    addeval_amatrix(-1.0, B, x, y);
-
-    clear_avector(x);
-    addevaltrans_amatrix(1.0, A, y, x);
-    addevaltrans_amatrix(-1.0, B, y, x);
-
-    norm = norm2_avector(x);
-  }
-
-  uninit_avector(y);
-  uninit_avector(x);
-
-  return REAL_SQRT(norm);
 }
 
 void
@@ -792,4 +721,88 @@ addmul_amatrix(field alpha, bool transA, pcamatrix A,
 	   alpha, A->a, A->ld, B->a, B->ld, 1.0, C->a, C->ld);
     }
   }
+}
+
+real
+norm2_matrix(mvm_t mvm, void *A, uint rows, uint cols)
+{
+  avector   tmp1, tmp2;
+  pavector  x, y;
+  real      norm;
+  uint      i;
+
+  x = init_avector(&tmp1, cols);
+  y = init_avector(&tmp2, rows);
+
+  random_avector(x);
+  norm = norm2_avector(x);
+  i = 0;
+  while (i < NORM_STEPS && norm > 0.0) {
+    scale_avector(1.0 / norm, x);
+
+    clear_avector(y);
+    mvm(1.0, false, A, x, y);
+
+    clear_avector(x);
+    mvm(1.0, true, A, y, x);
+
+    norm = norm2_avector(x);
+    i++;
+  }
+
+  uninit_avector(y);
+  uninit_avector(x);
+
+  return REAL_SQRT(norm);
+}
+
+real
+norm2_amatrix(pcamatrix A)
+{
+  return norm2_matrix((mvm_t) mvm_amatrix, (void *) A, A->rows,
+		      A->cols);
+}
+
+real
+norm2diff_matrix(mvm_t mvmA, void *A, mvm_t mvmB, void *B, uint rows,
+		 uint cols)
+{
+  avector   tmp1, tmp2;
+  pavector  x, y;
+  real      norm;
+  uint      i;
+
+  x = init_avector(&tmp1, cols);
+  y = init_avector(&tmp2, rows);
+
+  random_avector(x);
+  norm = norm2_avector(x);
+  i = 0;
+  while (i < NORM_STEPS && norm > 0.0) {
+    scale_avector(1.0 / norm, x);
+
+    clear_avector(y);
+    mvmA(1.0, false, A, x, y);
+    mvmB(-1.0, false, B, x, y);
+
+    clear_avector(x);
+    mvmA(1.0, true, A, y, x);
+    mvmB(-1.0, true, B, y, x);
+
+    norm = norm2_avector(x);
+    i++;
+  }
+
+  uninit_avector(y);
+  uninit_avector(x);
+
+  return REAL_SQRT(norm);
+}
+
+real
+norm2diff_amatrix(pcamatrix a, pcamatrix b)
+{
+  return norm2diff_matrix((mvm_t) mvm_amatrix, (void *) a,
+			  (mvm_t) mvm_amatrix, (void *) b, a->rows,
+			  a->cols);
 }
