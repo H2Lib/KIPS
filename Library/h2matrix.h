@@ -42,7 +42,7 @@ typedef const h2matrix *pch2matrix;
 typedef void (*buildN_t)(void *, const uint *, const uint *, pamatrix);
 
 /** @brief Callback function for admissible leaves. */
-typedef void (*buildS_t)(void *, pccluster, pccluster, pamatrix);
+typedef void (*buildS_t)(void *, pcspatialcluster, pcspatialcluster, pamatrix);
 
 /** @brief Representation of @f$\mathcal{H}^2@f$-matrices.
  *
@@ -295,7 +295,7 @@ build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb);
  *  @param G @f$\mathcal{H}^2@f$-matrix to be initialized. */
 HEADER_PREFIX void
 fill_h2matrix(void (*buildN)(void *data, const uint *ridx, const uint *cidx, pamatrix N),
-	      void (*buildS)(void *data, pccluster rc, pccluster cc, pamatrix S),
+	      void (*buildS)(void *data, pcspatialcluster rc, pcspatialcluster cc, pamatrix S),
 	      void *data,
 	      ph2matrix G);
 
@@ -642,7 +642,7 @@ getcols_h2matrix(pch2matrix) __attribute__ ((const,unused));
 INLINE_PREFIX uint
 getrows_h2matrix(pch2matrix h2)
 {
-  return h2->rb->t->size;
+  return h2->rb->t->nidx;
 }
 
 /** @brief Get the number of columns of an @ref h2matrix @f$G@f$.
@@ -652,7 +652,7 @@ getrows_h2matrix(pch2matrix h2)
 INLINE_PREFIX uint
 getcols_h2matrix(pch2matrix h2)
 {
-  return h2->cb->t->size;
+  return h2->cb->t->nidx;
 }
 
 #endif

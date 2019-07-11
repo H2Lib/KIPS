@@ -171,7 +171,7 @@ getS_uniform(puniform) __attribute__ ((unused));
 INLINE_PREFIX uint
 getrows_uniform(pcuniform u)
 {
-  return u->rb->t->size;
+  return u->rb->t->nidx;
 }
 
 /** @brief Get the number of columns of a @ref uniform matrix @f$G=V S W^*@f$.
@@ -181,7 +181,7 @@ getrows_uniform(pcuniform u)
 INLINE_PREFIX uint
 getcols_uniform(pcuniform u)
 {
-  return u->cb->t->size;
+  return u->cb->t->nidx;
 }
 
 /** @brief Get the factor S of a @ref uniform matrix @f$G=V S W^*@f$.

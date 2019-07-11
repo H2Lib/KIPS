@@ -31,19 +31,19 @@ typedef clusterbasis *pclusterbasis;
 /** @brief Pointer to constant @ref clusterbasis object. */
 typedef const clusterbasis *pcclusterbasis;
 
-#include "cluster.h"
+#include "spatialcluster.h"
 #include "amatrix.h"
 
 /** @brief Callback function for leaf matrices. */
-typedef void (*buildV_t)(void *, pccluster, pamatrix);
+typedef void (*buildV_t)(void *, pcspatialcluster, pamatrix);
 
 /** @brief Callback function for transfer matrices. */
-typedef void (*buildE_t)(void *, pccluster, pccluster, pamatrix);
+typedef void (*buildE_t)(void *, pcspatialcluster, pcspatialcluster, pamatrix);
 
 /** @brief Representation of a cluster basis. */
 struct _clusterbasis {
   /** @brief Corresponding cluster. */
-  pccluster t;
+  pcspatialcluster t;
 
   /** @brief Maximal rank */
   uint k;
@@ -79,7 +79,7 @@ struct _clusterbasis {
  *  @param t Corresponding cluster.
  *  @returns Initialized @ref clusterbasis object. */
 HEADER_PREFIX pclusterbasis
-init_clusterbasis(pclusterbasis cb, pccluster t);
+init_clusterbasis(pclusterbasis cb, pcspatialcluster t);
 
 /** @brief Initialize a @ref clusterbasis object for a leaf.
  *
@@ -93,7 +93,7 @@ init_clusterbasis(pclusterbasis cb, pccluster t);
  *  @param t Corresponding cluster.
  *  @returns Initialized @ref clusterbasis object. */
 HEADER_PREFIX pclusterbasis
-init_leaf_clusterbasis(pclusterbasis cb, pccluster t);
+init_leaf_clusterbasis(pclusterbasis cb, pcspatialcluster t);
 
 /** @brief Uninitializes a @ref clusterbasis object.
  *
@@ -121,7 +121,7 @@ uninit_clusterbasis(pclusterbasis cb);
  *  @return Returns the newly created @ref clusterbasis object.
  */
 HEADER_PREFIX pclusterbasis
-new_clusterbasis(pccluster t);
+new_clusterbasis(pcspatialcluster t);
 
 /** @brief Create a new @ref clusterbasis object for a leaf.
  *
@@ -135,7 +135,7 @@ new_clusterbasis(pccluster t);
  *  @return Returns the newly created @ref clusterbasis object.
  */
 HEADER_PREFIX pclusterbasis
-new_leaf_clusterbasis(pccluster t);
+new_leaf_clusterbasis(pcspatialcluster t);
 
 /** @brief Delete a @ref clusterbasis object.
  *
@@ -186,7 +186,7 @@ setrank_clusterbasis(uint k, pclusterbasis cb);
  *  @returns New root @ref clusterbasis object following the
  *         structure of the cluster tree. */
 HEADER_PREFIX pclusterbasis
-build_fromcluster_clusterbasis(pccluster t);
+build_fromcluster_clusterbasis(pcspatialcluster t);
 
 /* ------------------------------------------------------------
  * Initialize clusterbasis using callback functions
@@ -199,8 +199,8 @@ build_fromcluster_clusterbasis(pccluster t);
  *  @param data Additional data for callback functions.
  *  @param cb Cluster basis to be initialized. */
 HEADER_PREFIX void
-fill_clusterbasis(void (*buildV)(void *data, pccluster t, pamatrix V),
-		  void (*buildE)(void *data, pccluster sc, pccluster fc, pamatrix E),
+fill_clusterbasis(void (*buildV)(void *data, pcspatialcluster t, pamatrix V),
+		  void (*buildE)(void *data, pcspatialcluster sc, pcspatialcluster fc, pamatrix E),
 		  void *data,
 		  pclusterbasis cb);
 

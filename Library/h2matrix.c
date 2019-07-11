@@ -57,7 +57,7 @@ new_full_h2matrix(pclusterbasis rb, pclusterbasis cb)
 
   h2 = new_h2matrix(rb, cb);
 
-  h2->f = new_amatrix(rb->t->size, cb->t->size);
+  h2->f = new_amatrix(rb->t->nidx, cb->t->nidx);
 
   h2->desc = 1;
 
@@ -455,7 +455,7 @@ build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb)
 void
 fill_h2matrix(void (*buildN)
 	      (void *data, const uint * ridx, const uint * cidx, pamatrix N),
-	      void (*buildS) (void *data, pccluster rc, pccluster cc,
+	      void (*buildS) (void *data, pcspatialcluster rc, pcspatialcluster cc,
 			      pamatrix S), void *data, ph2matrix G)
 {
   uint      rsons, csons;
@@ -478,8 +478,8 @@ fill_h2matrix(void (*buildN)
   else if (G->f) {
     buildN(data, G->rb->t->idx, G->cb->t->idx, G->f);
 
-    assert(G->f->rows == G->rb->t->size);
-    assert(G->f->cols == G->cb->t->size);
+    assert(G->f->rows == G->rb->t->nidx);
+    assert(G->f->cols == G->cb->t->nidx);
   }
 }
 
@@ -522,8 +522,8 @@ fastaddeval_h2matrix(field alpha, pch2matrix h2, pcavector xt, pavector yt)
     uninit_avector(xt1);
   }
   else if (h2->f) {
-    xp = init_sub_avector(&loc1, (pavector) xt, cb->t->size, cb->k);
-    yp = init_sub_avector(&loc2, yt, rb->t->size, rb->k);
+    xp = init_sub_avector(&loc1, (pavector) xt, cb->t->nidx, cb->k);
+    yp = init_sub_avector(&loc2, yt, rb->t->nidx, rb->k);
 
     addeval_amatrix(alpha, h2->f, xp, yp);
 
@@ -550,13 +550,13 @@ fastaddeval_h2matrix(field alpha, pch2matrix h2, pcavector xt, pavector yt)
 
 	uninit_avector(yt1);
 
-	ytoff += (rb->sons > 0 ? rb->son[i]->ktree : rb->t->size);
+	ytoff += (rb->sons > 0 ? rb->son[i]->ktree : rb->t->nidx);
       }
       assert(ytoff == rb->ktree);
 
       uninit_avector(xt1);
 
-      xtoff += (cb->sons > 0 ? cb->son[j]->ktree : cb->t->size);
+      xtoff += (cb->sons > 0 ? cb->son[j]->ktree : cb->t->nidx);
     }
     assert(xtoff == cb->ktree);
   }
@@ -608,8 +608,8 @@ fastaddevaltrans_h2matrix(field alpha, pch2matrix h2,
     uninit_avector(xt1);
   }
   else if (h2->f) {
-    xp = init_sub_avector(&loc1, (pavector) xt, rb->t->size, rb->k);
-    yp = init_sub_avector(&loc2, yt, cb->t->size, cb->k);
+    xp = init_sub_avector(&loc1, (pavector) xt, rb->t->nidx, rb->k);
+    yp = init_sub_avector(&loc2, yt, cb->t->nidx, cb->k);
 
     addevaltrans_amatrix(alpha, h2->f, xp, yp);
 
@@ -637,13 +637,13 @@ fastaddevaltrans_h2matrix(field alpha, pch2matrix h2,
 
 	uninit_avector(xt1);
 
-	xtoff += (rb->sons > 0 ? rb->son[i]->ktree : rb->t->size);
+	xtoff += (rb->sons > 0 ? rb->son[i]->ktree : rb->t->nidx);
       }
       assert(xtoff == rb->ktree);
 
       uninit_avector(yt1);
 
-      ytoff += (cb->sons > 0 ? cb->son[j]->ktree : cb->t->size);
+      ytoff += (cb->sons > 0 ? cb->son[j]->ktree : cb->t->nidx);
     }
     assert(ytoff == cb->ktree);
   }
@@ -688,16 +688,16 @@ addevalsymm_offdiag(field alpha, pch2matrix h2, pavector xt,
   assert(yta->size == h2->cb->ktree);
 
   if (h2->f) {
-    xp = init_sub_avector(&tmp1, xt, cb->t->size, cb->k);
-    yp = init_sub_avector(&tmp2, yt, rb->t->size, rb->k);
+    xp = init_sub_avector(&tmp1, xt, cb->t->nidx, cb->k);
+    yp = init_sub_avector(&tmp2, yt, rb->t->nidx, rb->k);
 
     addeval_amatrix(alpha, h2->f, xp, yp);
 
     uninit_avector(yp);
     uninit_avector(xp);
 
-    xp = init_sub_avector(&tmp1, xta, rb->t->size, rb->k);
-    yp = init_sub_avector(&tmp2, yta, cb->t->size, cb->k);
+    xp = init_sub_avector(&tmp1, xta, rb->t->nidx, rb->k);
+    yp = init_sub_avector(&tmp2, yta, cb->t->nidx, cb->k);
 
     addevaltrans_amatrix(alpha, h2->f, xp, yp);
 
@@ -721,7 +721,7 @@ addevalsymm_offdiag(field alpha, pch2matrix h2, pavector xt,
       if (h2->son[j * rsons]->cb == cb) {
 	xt1 = init_sub_avector(&tmp1, xt, cb->ktree, 0);
 	yta1 = init_sub_avector(&tmp2, yta, cb->ktree, 0);
-	xtoff += cb->t->size;
+	xtoff += cb->t->nidx;
       }
       else {
 	assert(j < cb->sons);
@@ -738,7 +738,7 @@ addevalsymm_offdiag(field alpha, pch2matrix h2, pavector xt,
 	if (h2->son[i]->rb == rb) {
 	  yt1 = init_sub_avector(&tmp3, yt, rb->ktree, 0);
 	  xta1 = init_sub_avector(&tmp4, xta, rb->ktree, 0);
-	  ytoff += rb->t->size;
+	  ytoff += rb->t->nidx;
 	}
 	else {
 	  assert(i < rb->sons);
@@ -788,7 +788,7 @@ addevalsymm_diag(field alpha, pch2matrix h2, pavector xt,
     aa = h2->f->a;
     lda = h2->f->ld;
 
-    n = rb->t->size;
+    n = rb->t->nidx;
     xp = init_sub_avector(&tmp1, xt, n, cb->k);
     yp = init_sub_avector(&tmp2, yt, n, rb->k);
 
@@ -816,7 +816,7 @@ addevalsymm_diag(field alpha, pch2matrix h2, pavector xt,
       if (h2->son[j * sons]->cb == cb) {
 	xt1 = init_sub_avector(&tmp1, xt, cb->ktree, 0);
 	yta1 = init_sub_avector(&tmp2, yta, cb->ktree, 0);
-	xtoff += cb->t->size;
+	xtoff += cb->t->nidx;
       }
       else {
 	assert(j < cb->sons);
@@ -833,7 +833,7 @@ addevalsymm_diag(field alpha, pch2matrix h2, pavector xt,
       if (h2->son[0]->rb == rb) {
 	yt1 = init_sub_avector(&tmp3, yt, rb->ktree, 0);
 	xta1 = init_sub_avector(&tmp4, xta, rb->ktree, 0);
-	ytoff += rb->t->size;
+	ytoff += rb->t->nidx;
       }
       else {
 	/* Skip superdiagonal blocks */
@@ -1037,10 +1037,10 @@ fastaddeval_otf_h2matrix(field alpha,
     uninit_avector(xt1);
   }
   else {
-    xp = init_sub_avector(&loc2, (pavector) xt, cb->t->size, cb->k);
-    yp = init_sub_avector(&loc3, yt, rb->t->size, rb->k);
+    xp = init_sub_avector(&loc2, (pavector) xt, cb->t->nidx, cb->k);
+    yp = init_sub_avector(&loc3, yt, rb->t->nidx, rb->k);
 
-    N = init_amatrix(&loc1, rb->t->size, cb->t->size);
+    N = init_amatrix(&loc1, rb->t->nidx, cb->t->nidx);
     buildN(data, rb->t->idx, cb->t->idx, N);
 
     addeval_amatrix(alpha, N, xp, yp);
@@ -1188,10 +1188,10 @@ fastaddevaltrans_otf_h2matrix(field alpha,
     uninit_avector(xt1);
   }
   else {
-    yp = init_sub_avector(&loc2, yt, cb->t->size, cb->k);
-    xp = init_sub_avector(&loc3, (pavector) xt, rb->t->size, rb->k);
+    yp = init_sub_avector(&loc2, yt, cb->t->nidx, cb->k);
+    xp = init_sub_avector(&loc3, (pavector) xt, rb->t->nidx, rb->k);
 
-    N = init_amatrix(&loc1, rb->t->size, cb->t->size);
+    N = init_amatrix(&loc1, rb->t->nidx, cb->t->nidx);
     buildN(data, rb->t->idx, cb->t->idx, N);
 
     addevaltrans_amatrix(alpha, N, xp, yp);
@@ -1234,7 +1234,7 @@ real
 norm2_h2matrix(pch2matrix H2)
 {
   return norm2_matrix((mvm_t) mvm_h2matrix, (void *) H2,
-		      H2->rb->t->size, H2->cb->t->size);
+		      H2->rb->t->nidx, H2->cb->t->nidx);
 }
 
 real
@@ -1242,7 +1242,7 @@ norm2diff_h2matrix(pch2matrix a, pch2matrix b)
 {
   return norm2diff_matrix((mvm_t) mvm_h2matrix, (void *) a,
 			  (mvm_t) mvm_h2matrix, (void *) b,
-			  a->rb->t->size, a->cb->t->size);
+			  a->rb->t->nidx, a->cb->t->nidx);
 }
 
 real
@@ -1250,7 +1250,7 @@ norm2diff_amatrix_h2matrix(pch2matrix a, pcamatrix b)
 {
   return norm2diff_matrix((mvm_t) mvm_h2matrix, (void *) a,
 			  (mvm_t) mvm_amatrix, (void *) b,
-			  a->rb->t->size, a->cb->t->size);
+			  a->rb->t->nidx, a->cb->t->nidx);
 }
 
 /* ------------------------------------------------------------
@@ -1281,17 +1281,17 @@ cairodraw(cairo_t * cr, pch2matrix G, bool storage, uint levels)
 	cairodraw(cr, G->son[i + j * rsons], storage, levels - 1);
 	cairo_restore(cr);
 
-	roff += G->son[i + j * rsons]->rb->t->size;
+	roff += G->son[i + j * rsons]->rb->t->nidx;
       }
-      assert(roff == G->rb->t->size);
+      assert(roff == G->rb->t->nidx);
 
-      coff += G->son[j * rsons]->cb->t->size;
+      coff += G->son[j * rsons]->cb->t->nidx;
     }
-    assert(coff == G->cb->t->size);
+    assert(coff == G->cb->t->nidx);
   }
   else {
-    rsize = G->rb->t->size;
-    csize = G->cb->t->size;
+    rsize = G->rb->t->nidx;
+    csize = G->cb->t->nidx;
 
     if (G->son) {
       cairo_rectangle(cr, 0.0, 0.0, csize, rsize);
@@ -1360,8 +1360,8 @@ draw_cairo_h2matrix(cairo_t * cr, pch2matrix G, bool storage, uint levels)
   cairo_save(cr);
 
   /* Obtain size of block */
-  rsize = G->rb->t->size;
-  csize = G->cb->t->size;
+  rsize = G->rb->t->nidx;
+  csize = G->cb->t->nidx;
 
   /* Obtain size of current Cairo bounding box */
   cairo_clip_extents(cr, &sx, &sy, &ex, &ey);

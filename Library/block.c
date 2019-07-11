@@ -19,7 +19,7 @@ static uint active_block = 0;
  * ------------------------------------------------------------ */
 
 pblock
-new_block(pcluster rc, pcluster cc, uint rsons, uint csons)
+new_block(pspatialcluster rc, pspatialcluster cc, uint rsons, uint csons)
 {
   pblock b;
   uint i, j;
@@ -155,17 +155,17 @@ cairodraw_subblock(cairo_t *cr, pcblock b, int levels)
 	cairodraw_subblock(cr, b->son[i+j*rsons], levels-1);
 	cairo_restore(cr);
 
-	roff += b->son[i+j*rsons]->rc->size;
+	roff += b->son[i+j*rsons]->rc->nidx;
       }
-      assert(roff == b->rc->size);
+      assert(roff == b->rc->nidx);
 
-      coff += b->son[j*rsons]->cc->size;
+      coff += b->son[j*rsons]->cc->nidx;
     }
-    assert(coff == b->cc->size);
+    assert(coff == b->cc->nidx);
   }
   else {
-    rsize = b->rc->size;
-    csize = b->cc->size;
+    rsize = b->rc->nidx;
+    csize = b->cc->nidx;
     
     if(b->son) {
       cairo_rectangle(cr, 0.0, 0.0, csize, rsize);
@@ -201,8 +201,8 @@ cairodraw_block(cairo_t *cr, pcblock b, int levels)
   cairo_save(cr);
 
   /* Obtain size of block */
-  rsize = b->rc->size;
-  csize = b->cc->size;
+  rsize = b->rc->nidx;
+  csize = b->cc->nidx;
 
   /* Obtain size of current Cairo bounding box */
   cairo_clip_extents(cr, &sx, &sy, &ex, &ey);
@@ -230,12 +230,65 @@ cairodraw_block(cairo_t *cr, pcblock b, int levels)
 #endif
 
 /* ------------------------------------------------------------
+ * Standard admissibility conditions,
+ * "data" points to the admissibility parameter eta
+ * ------------------------------------------------------------ */
+
+bool
+h2std_admissibility(pspatialcluster rc, pspatialcluster cc, void *data)
+{
+  preal pe = (preal) data;
+  real eta = (*pe);
+  real rdiam, cdiam, dist;
+
+  rdiam = diam_spatialcluster(rc);
+  cdiam = diam_spatialcluster(cc);
+  dist = 2.0 * eta * dist_spatialcluster(rc, cc);
+
+  return (rdiam <= dist && cdiam <= dist);
+}
+
+bool
+hstd_admissibility(pspatialcluster rc, pspatialcluster cc, void *data)
+{
+  preal pe = (preal) data;
+  real rdiam, cdiam, dist;
+
+  rdiam = diam_spatialcluster(rc);
+  cdiam = diam_spatialcluster(cc);
+  dist = 2.0 * (*pe) * dist_spatialcluster(rc, cc);
+
+  return (rdiam <= dist || cdiam <= dist);
+}
+
+bool
+h2periodic_admissibility (pspatialcluster rc, pspatialcluster cc, void *data) {
+  preal pe = (preal) data;
+  real eta, rdiam, cdiam, dist;
+  preal bmin, bmax;
+  uint dim;
+  
+  dim = rc->dim;
+  assert (dim == cc->dim);
+  eta = *pe;
+  bmin = pe+1;
+  bmax = bmin+dim;
+  
+  rdiam = diam_spatialcluster (rc);
+  cdiam = diam_spatialcluster (cc);
+  dist = distPeriodic_spatialcluster(rc, cc, bmin, bmax);
+  dist *= 2.0 * eta;
+  
+  return (rdiam <= dist && cdiam <= dist);
+}
+
+/* ------------------------------------------------------------
  * Building standard block trees
  * ------------------------------------------------------------ */
 
 pblock
-build_block(pcluster rc, pcluster cc,
-	    bool (*admissible)(pcluster rc, pcluster cc, void *data),
+build_block(pspatialcluster rc, pspatialcluster cc,
+	    bool (*admissible)(pspatialcluster rc, pspatialcluster cc, void *data),
 	    void *data,
 	    uint levels, bool strict)
 {
@@ -290,41 +343,40 @@ build_block(pcluster rc, pcluster cc,
   return b;
 }
 
-bool
-h2std_admissibility(pcluster rc, pcluster cc, void *data)
-{
-  preal pe = (preal) data;
-  real eta = (*pe);
-  real rdiam, cdiam, dist;
-
-  rdiam = diam_cluster(rc);
-  cdiam = diam_cluster(cc);
-  dist = 2.0 * eta * dist_cluster(rc, cc);
-
-  return (rdiam <= dist && cdiam <= dist);
-}
-
 pblock
-buildh2std_block(pcluster rc, pcluster cc, real eta)
+buildh2std_block(pspatialcluster rc, pspatialcluster cc, real eta)
 {
   return build_block(rc, cc, h2std_admissibility, &eta, 64, true);
 }
 
-bool
-hstd_admissibility(pcluster rc, pcluster cc, void *data)
+pblock
+buildhstd_block(pspatialcluster rc, pspatialcluster cc, real eta)
 {
-  preal pe = (preal) data;
-  real rdiam, cdiam, dist;
-
-  rdiam = diam_cluster(rc);
-  cdiam = diam_cluster(cc);
-  dist = 2.0 * (*pe) * dist_cluster(rc, cc);
-
-  return (rdiam <= dist || cdiam <= dist);
+  return build_block(rc, cc, hstd_admissibility, &eta, 64, false);
 }
 
 pblock
-buildhstd_block(pcluster rc, pcluster cc, real eta)
-{
-  return build_block(rc, cc, hstd_admissibility, &eta, 64, false);
+buildh2periodic_block (pspatialcluster rc, pspatialcluster cc, real eta, preal bmin, preal bmax) {
+  preal data;
+  pblock b;
+  uint dim, i, j;
+  
+  dim = rc->dim;
+  assert (dim == cc->dim);
+  data = allocreal (1+dim+dim);
+  data[0] = eta;
+  j = 1;
+  for (i=0; i<dim; i++) {
+    data[j] = bmin[i];
+    j++;
+  }
+  for (i=0; i<dim; i++) {
+    data[j] = bmax[i];
+    j++;
+  }
+  
+  b = build_block (rc, cc, h2periodic_admissibility, data, 64, true);
+  
+  freemem (data);
+  return b;
 }

@@ -15,7 +15,7 @@ static uint active_clusterbasis = 0;
  * ------------------------------------------------------------ */
 
 static void
-init_raw_clusterbasis(pclusterbasis cb, pccluster t)
+init_raw_clusterbasis(pclusterbasis cb, pcspatialcluster t)
 {
   assert(cb != NULL);
 
@@ -33,7 +33,7 @@ init_raw_clusterbasis(pclusterbasis cb, pccluster t)
 }
 
 pclusterbasis
-init_clusterbasis(pclusterbasis cb, pccluster t)
+init_clusterbasis(pclusterbasis cb, pcspatialcluster t)
 {
   uint      i, sons;
 
@@ -52,7 +52,7 @@ init_clusterbasis(pclusterbasis cb, pccluster t)
 }
 
 pclusterbasis
-init_leaf_clusterbasis(pclusterbasis cb, pccluster t)
+init_leaf_clusterbasis(pclusterbasis cb, pcspatialcluster t)
 {
   assert(cb != NULL);
 
@@ -87,7 +87,7 @@ uninit_clusterbasis(pclusterbasis cb)
 }
 
 pclusterbasis
-new_clusterbasis(pccluster t)
+new_clusterbasis(pcspatialcluster t)
 {
   pclusterbasis cb;
 
@@ -99,7 +99,7 @@ new_clusterbasis(pccluster t)
 }
 
 pclusterbasis
-new_leaf_clusterbasis(pccluster t)
+new_leaf_clusterbasis(pcspatialcluster t)
 {
   pclusterbasis cb;
 
@@ -131,7 +131,7 @@ update_clusterbasis(pclusterbasis cb)
   stree = 0;
 
   if (cb->sons == 0) {
-    stree += cb->t->size;
+    stree += cb->t->nidx;
   }
   else {
     for (i = 0; i < cb->sons; i++)
@@ -151,7 +151,7 @@ setrank_clusterbasis(uint k, pclusterbasis cb)
       resize_amatrix(&cb->son[i]->E, cb->son[i]->k, k);
   }
   else
-    resize_amatrix(&cb->V, cb->t->size, k);
+    resize_amatrix(&cb->V, cb->t->nidx, k);
 
   cb->k = k;
 
@@ -163,7 +163,7 @@ setrank_clusterbasis(uint k, pclusterbasis cb)
  * ------------------------------------------------------------ */
 
 pclusterbasis
-build_fromcluster_clusterbasis(pccluster t)
+build_fromcluster_clusterbasis(pcspatialcluster t)
 {
   pclusterbasis cb, cb1;
   uint      i;
@@ -187,8 +187,8 @@ build_fromcluster_clusterbasis(pccluster t)
  * ------------------------------------------------------------ */
 
 void
-fill_clusterbasis(void (*buildV)(void *data, pccluster t, pamatrix V),
-		  void (*buildE)(void *data, pccluster sc, pccluster fc, pamatrix E),
+fill_clusterbasis(void (*buildV)(void *data, pcspatialcluster t, pamatrix V),
+		  void (*buildE)(void *data, pcspatialcluster sc, pcspatialcluster fc, pamatrix E),
 		  void *data,
 		  pclusterbasis cb)
 {
@@ -285,10 +285,10 @@ forward_clusterbasis(pcclusterbasis cb, pcavector x, pavector xt)
   }
   else {
     /* Permuted entries of x */
-    xp = init_sub_avector(&loc2, xt, cb->t->size, cb->k);
+    xp = init_sub_avector(&loc2, xt, cb->t->nidx, cb->k);
 
     /* Find and copy entries */
-    for (i = 0; i < cb->t->size; i++)
+    for (i = 0; i < cb->t->nidx; i++)
       xp->v[i] = x->v[cb->t->idx[i]];
 
     /* Multiply by leaf matrix */
@@ -337,13 +337,13 @@ backward_clusterbasis(pcclusterbasis cb, pavector yt, pavector y)
   }
   else {
     /* Permuted entries of x */
-    yp = init_sub_avector(&loc2, yt, cb->t->size, cb->k);
+    yp = init_sub_avector(&loc2, yt, cb->t->nidx, cb->k);
 
     /* Multiply by leaf matrix */
     addeval_amatrix(1.0, &cb->V, yc, yp);
 
     /* Find and copy entries */
-    for (i = 0; i < cb->t->size; i++)
+    for (i = 0; i < cb->t->nidx; i++)
       y->v[cb->t->idx[i]] += yp->v[i];
 
     uninit_avector(yp);

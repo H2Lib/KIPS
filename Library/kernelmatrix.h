@@ -11,6 +11,10 @@
 #ifndef KERNELMATRIX_H
 #define KERNELMATRIX_H
 
+#include "settings.h"
+#include "h2matrix.h"
+#include "spatialcluster.h"
+
 /** @defgroup kernelmatrix kernelmatrix
  *  @brief Approximation of kernel matrices.
  *  @{ */
@@ -24,10 +28,8 @@ typedef kernelmatrix *pkernelmatrix;
 /** @brief Pointer to a constant @ref kernelmatrix object. */
 typedef const kernelmatrix *pckernelmatrix;
 
-#include "settings.h"
-#include "h2matrix.h"
-#include "cluster.h"
-#include "clustergeometry.h"
+/** @brief Pointer to a kernel function. */
+typedef real (*kernel) (pcreal xx, pcreal yy, void *data);
 
 /** @brief Representation of a kernel matrix an its approximation.
  *
@@ -43,7 +45,7 @@ struct _kernelmatrix {
   uint dim;
 
   /** @brief Kernel function. */
-  field (*kernel)(const real *xx, const real *yy, void *data);
+  kernel g;
 
   /** @brief Data for the kernel function. */
   void *data;
@@ -76,28 +78,28 @@ new_kernelmatrix(uint dim, uint points, uint m);
 HEADER_PREFIX void
 del_kernelmatrix(pkernelmatrix km);
 
-/** @brief Create a @ref clustergeometry object for a @ref kernelmatrix
- *  object.
+/** @brief Update a @ref kernelmatrix object with new points.
  *
- *  @param km Description of the kernel matrix, particularly the points.
- *  @returns @ref clustergeometry object for the given points and dimension. */
-HEADER_PREFIX pclustergeometry
-creategeometry_kernelmatrix(pckernelmatrix km);
+ *  @param points New number of points.
+ *  @param x Location of new points.
+ *  @param km Object to be updated. */
+HEADER_PREFIX void
+update_kernelmatrix (uint points, preal *x, pkernelmatrix km);
 
 HEADER_PREFIX void
 fillN_kernelmatrix(const uint *ridx, const uint *cidx, pckernelmatrix km,
 		   pamatrix N);
 
 HEADER_PREFIX void
-fillS_kernelmatrix(pccluster rc, pccluster cc,
+fillS_kernelmatrix(pcspatialcluster rc, pcspatialcluster cc,
 		   pckernelmatrix km, pamatrix S);
 
 HEADER_PREFIX void
-fillV_kernelmatrix(pccluster tc,
+fillV_kernelmatrix(pcspatialcluster tc,
 		   pckernelmatrix km, pamatrix V);
 
 HEADER_PREFIX void
-fillE_kernelmatrix(pccluster sc, pccluster fc,
+fillE_kernelmatrix(pcspatialcluster sc, pcspatialcluster fc,
 		   pckernelmatrix km, pamatrix E);
 
 /** @brief Fill a @ref clusterbasis using interpolation.
@@ -113,6 +115,17 @@ fill_clusterbasis_kernelmatrix(pckernelmatrix km, pclusterbasis cb);
  *  @param G Matrix to be filled. */
 HEADER_PREFIX void
 fill_h2matrix_kernelmatrix(pckernelmatrix km, ph2matrix G);
+
+/** @brief Update a @ref h2matrix object based on a @ref kernelmatrix object.
+ *
+ *  The algorithm will preserve the overall structure of the h2matrix while 
+ *  changing leaf matrices and nearfield matrices based on new points given 
+ *  by the kernelmatrix.
+ *
+ *  @param km The @ref kernelmatrix object containing the new points.
+ *  @param G Matrix to be updated. */
+HEADER_PREFIX void
+update_h2matrix_kernelmatrix(pckernelmatrix km, ph2matrix G);
 
 /** @} */
 

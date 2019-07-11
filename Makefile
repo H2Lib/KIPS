@@ -7,23 +7,23 @@ KIPS_CORE0 = \
 	Library/basic.c \
 	Library/settings.c \
 	Library/parameters.c \
-	Library/interpolation.c
+	Library/interpolation.c \
+  Library/blas.c 
 
 KIPS_CORE1 = \
 	Library/avector.c \
 	Library/rvector.c \
 	Library/amatrix.c \
-	Library/eigensolvers.c \
 
 KIPS_CORE2 = \
-	Library/cluster.c \
-	Library/block.c \
+	Library/spatialcluster.c \
+	Library/spatialgeometry.c \
 	Library/clusterbasis.c \
-	Library/clustergeometry.c \
-	Library/uniform.c \
+	Library/block.c \
 	Library/h2matrix.c \
-	Library/particles.c \
-	Library/kernelmatrix.c
+	Library/uniform.c \
+	Library/kernelmatrix.c \
+  	Library/coulomb.c 
 	
 SOURCES_libkips := \
 	$(KIPS_CORE0) \
@@ -45,8 +45,8 @@ DEPENDENCIES_libkips := $(SOURCES_libkips:.c=.d)
 SOURCES_stable := \
 	Tests/test_amatrix.c \
 	Tests/test_interpolation.c \
-	Tests/test_particles.c \
-	Tests/test_kernelmatrix.c
+	Tests/test_kernelmatrix.c \
+  	Tests/test_coulomb.c
 
 SOURCES_tests = \
 	$(SOURCES_stable)

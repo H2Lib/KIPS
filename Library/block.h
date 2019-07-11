@@ -14,7 +14,7 @@ typedef struct _block block;
 typedef block *pblock;
 typedef const block *pcblock;
 
-#include "cluster.h"
+#include "spatialcluster.h"
 #include "settings.h"
 
 #include <stdlib.h>
@@ -25,8 +25,8 @@ typedef const block *pcblock;
 
 struct _block
 {
-  pcluster rc;			/* Row cluster */
-  pcluster cc;			/* Column cluster */
+  pspatialcluster rc;			/* Row cluster */
+  pspatialcluster cc;			/* Column cluster */
 
   bool adm;			/* Admissibility */
 
@@ -42,7 +42,7 @@ struct _block
  * ------------------------------------------------------------ */
 
 HEADER_PREFIX pblock
-new_block(pcluster rc, pcluster cc, uint rsons, uint csons);
+new_block(pspatialcluster rc, pspatialcluster cc, uint rsons, uint csons);
 
 HEADER_PREFIX void
 update_block(pblock b);
@@ -78,25 +78,35 @@ cairodraw_block(cairo_t *cr, pcblock b, int levels);
  * ------------------------------------------------------------ */
 
 HEADER_PREFIX bool
-h2std_admissibility(pcluster rc, pcluster cc, void *data);
+h2std_admissibility(pspatialcluster rc, pspatialcluster cc, void *data);
 
 HEADER_PREFIX bool
-hstd_admissibility(pcluster rc, pcluster cc, void *data);
+hstd_admissibility(pspatialcluster rc, pspatialcluster cc, void *data);
+
+/* Standard admissibility condition for a periodic system. 
+ * The parameter "data" is supposed to contain the admissibility 
+ * parameter eta, the vector bmin of the minimal coordinates of the unit cell and the 
+ * vector bmax of the corresponding maximal coordinates, in this order.*/
+HEADER_PREFIX bool
+h2periodic_admissibility (pspatialcluster rc, pspatialcluster cc, void *data);
 
 /* ------------------------------------------------------------
  * Building standard block trees
  * ------------------------------------------------------------ */
 
 HEADER_PREFIX pblock
-build_block(pcluster rc, pcluster cc,
-	    bool (*admissible)(pcluster rc, pcluster cc, void *data),
+build_block(pspatialcluster rc, pspatialcluster cc,
+	    bool (*admissible)(pspatialcluster rc, pspatialcluster cc, void *data),
 	    void *data,
 	    uint levels, bool strict);
 
 HEADER_PREFIX pblock
-buildh2std_block(pcluster rc, pcluster cc, real eta);
+buildh2std_block(pspatialcluster rc, pspatialcluster cc, real eta);
 
 HEADER_PREFIX pblock
-buildhstd_block(pcluster rc, pcluster cc, real eta);
+buildhstd_block(pspatialcluster rc, pspatialcluster cc, real eta);
+
+HEADER_PREFIX pblock
+buildh2periodic_block (pspatialcluster rc, pspatialcluster cc, real eta, preal bmin, preal bmax);
 
 #endif
