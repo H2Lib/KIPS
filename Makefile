@@ -46,8 +46,7 @@ SOURCES_stable := \
 	Tests/test_amatrix.c \
 	Tests/test_interpolation.c \
 	Tests/test_kernelmatrix.c \
-  	Tests/test_coulomb.c \
-	Tests/test_coulomb_gradient.c
+  	Tests/test_coulomb.c 
 
 SOURCES_tests = \
 	$(SOURCES_stable)
