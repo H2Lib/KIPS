@@ -16,7 +16,7 @@ static uint active_spatialcluster = 0;
  * ------------------------------------------------------------ */
 
 pspatialcluster
-new_spatialcluster(uint dim, preal bmin, preal bmax, uint sons, uint desc) 
+new_spatialcluster(uint dim, preal bmin, preal bmax, uint sons) 
 {
   pspatialcluster s;
   uint i;
@@ -39,8 +39,11 @@ new_spatialcluster(uint dim, preal bmin, preal bmax, uint sons, uint desc)
     for(i=0; i<sons; i++)
       s->son[i] = NULL;
   }
-  s->desc = desc;
+  s->desc = 1;
   
+  #ifdef USE_OPENMP
+  #pragma omp atomic
+  #endif
   active_spatialcluster++;
 
   return s;
@@ -51,9 +54,8 @@ del_spatialcluster(pspatialcluster s)
 {
   uint i;
       
-  freemem(s->bmin);
-  freemem(s->bmax);
-  //freemem(s->idx);
+  freemem (s->bmin);
+  freemem (s->bmax);
 
   if(s->sons > 0) {
     for(i=0; i<s->sons; i++)
@@ -65,19 +67,25 @@ del_spatialcluster(pspatialcluster s)
 
   assert(active_spatialcluster > 0);
 
+  #ifdef USE_OPENMP
+  #pragma omp atomic
+  #endif
   active_spatialcluster--;
 }
 
 void
 update_spatialcluster (pspatialcluster s) {
-  uint i, nidx;
+  uint i, nidx, desc;
   
   if (s->sons != 0) {
     nidx = 0;
+    desc = 0;
     for (i=0; i<s->sons; i++) {
       update_spatialcluster (s->son[i]);
       nidx += s->son[i]->nidx;
+      desc += s->son[i]->desc;
     }
+    s->desc += desc;
     s->nidx = nidx;
   }
 }

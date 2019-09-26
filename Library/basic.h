@@ -50,7 +50,7 @@ typedef stopwatch *pstopwatch;
 extern int max_pardepth;
 
 /** @brief "Machine accuracy" for some algorithms */
-#define H2_MACH_EPS 1e-13
+#define KIPS_MACH_EPS 1e-13
 
 /* ------------------------------------------------------------
  Set up the library
@@ -203,11 +203,25 @@ uninit_kips();
 #define REAL_LOG(x) log(x)
 #endif
 
-/** @brief Compute the exponetial function @f$\exp(x)@f$ of a real number @f$x@f$. */
+/** @brief Compute the exponential function @f$\exp(x)@f$ of a real number @f$x@f$. */
 #ifdef USE_FLOAT
 #define REAL_EXP(x) expf(x)
 #else
 #define REAL_EXP(x) exp(x)
+#endif
+
+/** @brief Compute the error function @f$\erf(x)@f$ of a real number @f$x@f$. */
+#ifdef USE_FLOAT
+#define REAL_ERF(x) erff(x)
+#else
+#define REAL_ERF(x) erf(x)
+#endif
+
+/** @brief Compute the complementary error function @f$\erf(x)@f$ of a real number @f$x@f$. */
+#ifdef USE_FLOAT
+#define REAL_ERFC(x) erfcf(x)
+#else
+#define REAL_ERFC(x) erfc(x)
 #endif
 
 /** @brief Compute a (pseudo-)random real number */

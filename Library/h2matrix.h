@@ -62,6 +62,13 @@ struct _h2matrix {
   /** @brief Standard matrix, for inadmissible leaves. */
   pamatrix f;
 
+  /** @brief Multiplicity of nearfield matrices. For <tt>d>1</tt>, the nearfield 
+      matrices are a composite of <tt>d</tt> nearfield matrices. 
+      E. g. for gradients, each block of <tt>d</tt> rows belongs to the gradient 
+      evaluated in a certain point.
+      Default value is 1. */
+  uint d;
+  
   /** @brief Submatrices. */
   ph2matrix *son;
   /** @brief Number of block rows. */
@@ -118,11 +125,12 @@ new_uniform_h2matrix(pclusterbasis rb, pclusterbasis cb);
  *  This call happens automatically if the last object referencing
  *  this object (see @ref ref_h2matrix) is deleted.
  *
+ *  @param d Multiplicity of the matrix.
  *  @param rb Row cluster basis.
  *  @param cb Column cluster basis.
  *  @returns New @ref h2matrix object containing a new @ref amatrix. */
 HEADER_PREFIX ph2matrix
-new_full_h2matrix(pclusterbasis rb, pclusterbasis cb);
+new_full_h2matrix (uint d, pclusterbasis rb, pclusterbasis cb);
 
 /** @brief Create a new @ref hmatrix object representing a
  *  subdivided matrix.

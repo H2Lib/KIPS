@@ -46,7 +46,7 @@ kernel_log(const real *xx, const real *yy, void *data)
 int
 main(int argc, char **argv)
 {
-  real eta, norm, error, maxdiam, t_setup, *bmin, *bmax;
+  real eta, norm, error, mindiam, t_setup, *bmin, *bmax;
   uint i, j, dim, points, m, maxdepth;
   pspatialgeometry sg;
   pspatialcluster sroot;
@@ -65,7 +65,7 @@ main(int argc, char **argv)
   
   dim = askforint ("Spatial dimension?", "", 3);
   maxdepth = askforint ("Maximal depth of spatial cluster tree?", "", 6);
-  maxdiam = askforreal ("Maximal diameter of leaf clusters?", "", 0.01);
+  mindiam = askforreal ("Minimal diameter of leaf clusters?", "", 0.01);
   kernel = askforchar("Kernel function? N)ewton, L)ogarithmic, or E)xponential?", 
                       "h2lib_kernelfunc", "nle", 'n');
   points = askforint("Number of points?", "h2lib_kernelpoints", 2048);
@@ -103,7 +103,7 @@ main(int argc, char **argv)
   
   printf("Creating spatial cluster tree\n");
   sg = new_spatialgeometry (dim, bmin, bmax);
-  sroot = init_spatialgeometry (maxdepth, maxdiam, sg);
+  sroot = init_spatialgeometry (maxdepth, mindiam, sg);
   printf ("%u spatial clusters\n", sroot->desc);
   
   printf ("Distributing random points to clusters\n");
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 
   printf("Filling cluster basis\n");
   start_stopwatch(sw);
-  fill_clusterbasis_kernelmatrix(km, cb);
+  fill_clusterbasis_kernelmatrix(false, km, cb);
   t_setup = stop_stopwatch(sw);
   sz = getsize_clusterbasis(cb);
   printf("  %.2f seconds\n" "  %.1f MB\n" "  %.1f KB/DoF\n", 
@@ -135,7 +135,7 @@ main(int argc, char **argv)
 
   printf("Filling H^2-matrix\n");
   start_stopwatch(sw);
-  fill_h2matrix_kernelmatrix(km, Gh2);
+  fill_h2matrix_kernelmatrix(false, km, Gh2);
   t_setup = stop_stopwatch(sw);
   printf("  %.2f seconds\n", t_setup);
 
@@ -146,7 +146,7 @@ main(int argc, char **argv)
   printf("Filling reference matrix\n");
   G = new_amatrix(points, points);
   start_stopwatch(sw);
-  fillN_kernelmatrix(0, 0, km, G);
+  fillN_kernelmatrix(false, NULL, NULL, km, G);
   t_setup = stop_stopwatch(sw);
   sz = getsize_amatrix(G);
   printf("  %.2f seconds\n" "  %.1f MB\n" "  %.1f KB/DoF\n", 
@@ -161,6 +161,7 @@ main(int argc, char **argv)
   printf("  Spectral error %.3e (%.3e)\n", error, error/norm);
   
   printf ("Cleaning up\n");
+  del_stopwatch (sw);
   del_amatrix (G);
   del_h2matrix (Gh2);
   del_clusterbasis (cb);

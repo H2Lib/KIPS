@@ -31,6 +31,9 @@ typedef const kernelmatrix *pckernelmatrix;
 /** @brief Pointer to a kernel function. */
 typedef real (*kernel) (pcreal xx, pcreal yy, void *data);
 
+/** @brief Pointer to the gradient of a kernel function. */
+typedef void (*gradient) (pcreal xx, pcreal yy, void *data, pfield f);
+
 /** @brief Representation of a kernel matrix an its approximation.
  *
  *  A kernel matrix is a matrix with entries of the form
@@ -46,6 +49,9 @@ struct _kernelmatrix {
 
   /** @brief Kernel function. */
   kernel g;
+  
+  /** @brief Gradient of the kernel function. */
+  gradient f;
 
   /** @brief Data for the kernel function. */
   void *data;
@@ -87,34 +93,36 @@ HEADER_PREFIX void
 update_kernelmatrix (uint points, preal *x, pkernelmatrix km);
 
 HEADER_PREFIX void
-fillN_kernelmatrix(const uint *ridx, const uint *cidx, pckernelmatrix km,
-		   pamatrix N);
+fillN_kernelmatrix (bool gradient, const uint *ridx, const uint *cidx, 
+                    pckernelmatrix km, pamatrix N);
 
 HEADER_PREFIX void
-fillS_kernelmatrix(pcspatialcluster rc, pcspatialcluster cc,
-		   pckernelmatrix km, pamatrix S);
+fillS_kernelmatrix(pcspatialcluster rc, pcspatialcluster cc, pckernelmatrix km, 
+                   pamatrix S);
 
 HEADER_PREFIX void
-fillV_kernelmatrix(pcspatialcluster tc,
-		   pckernelmatrix km, pamatrix V);
+fillV_kernelmatrix (bool gradient, pcspatialcluster tc, pckernelmatrix km, 
+                    pamatrix V);
 
 HEADER_PREFIX void
-fillE_kernelmatrix(pcspatialcluster sc, pcspatialcluster fc,
-		   pckernelmatrix km, pamatrix E);
+fillE_kernelmatrix (pcspatialcluster sc, pcspatialcluster fc, pckernelmatrix km, 
+                   pamatrix E);
 
 /** @brief Fill a @ref clusterbasis using interpolation.
  *
+ *  @param gradient Type flag for a gradient cluster basis.
  *  @param km Description of the kernel matrix.
  *  @param cb Cluster basis to be filled. */
 HEADER_PREFIX void
-fill_clusterbasis_kernelmatrix(pckernelmatrix km, pclusterbasis cb);
+fill_clusterbasis_kernelmatrix(bool gradient, pckernelmatrix km, pclusterbasis cb);
 
 /** @brief Fill a @ref h2matrix using interpolation.
  *
+ *  @param gradient Type flag for a gradient kernel matrix.
  *  @param km Description of the kernel matrix.
  *  @param G Matrix to be filled. */
 HEADER_PREFIX void
-fill_h2matrix_kernelmatrix(pckernelmatrix km, ph2matrix G);
+fill_h2matrix_kernelmatrix(bool gradient, pckernelmatrix km, ph2matrix G);
 
 /** @brief Update a @ref h2matrix object based on a @ref kernelmatrix object.
  *
@@ -122,10 +130,11 @@ fill_h2matrix_kernelmatrix(pckernelmatrix km, ph2matrix G);
  *  changing leaf matrices and nearfield matrices based on new points given 
  *  by the kernelmatrix.
  *
+ *  @param gradient Type flag for a gradient kernel matrix.
  *  @param km The @ref kernelmatrix object containing the new points.
  *  @param G Matrix to be updated. */
 HEADER_PREFIX void
-update_h2matrix_kernelmatrix(pckernelmatrix km, ph2matrix G);
+update_h2matrix_kernelmatrix(bool gradient, pckernelmatrix km, ph2matrix G);
 
 /** @} */
 

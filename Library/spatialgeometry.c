@@ -29,8 +29,14 @@ new_spatialgeometry(uint dim, preal bmin, preal bmax)
 void
 del_spatialgeometry(pspatialgeometry sg)
 {
+  uint l;
   freemem (sg->bmin);
   freemem (sg->bmax);
+  freemem (sg->s[0][0]->idx);
+  for (l=0; l<=sg->depth; l++) {
+    freemem (sg->splits[l]);
+    freemem (sg->s[l]);
+  }
   freemem (sg->splits);
   freemem (sg->s);
   freemem (sg);
@@ -40,17 +46,73 @@ del_spatialgeometry(pspatialgeometry sg)
    Spatial cluster tree
    ------------------------------------------------------------ */
 
+/* Enumerate clusters on a given level recursively by dimension and 
+   set up bounding boxes and links to sons. */
+static void
+label_cluster (uint level, uint dim, uint m, uint k, uint k_son0, 
+               uint k_son1, pspatialgeometry sg) {
+  uint i, n, sons;
+  real d;
+  pspatialcluster s;
+  
+  assert (level >= 1);
+  dim --;
+  n = 1<<sg->splits[level-1][dim];
+  sons = (level == sg->depth ? 0 : 2);
+  if (dim < sg->dim) {
+    k *= n;
+    k_son0 *= n;
+    k_son1 *= n;
+  }
+  if (dim > 0) {
+    if (dim == m) {
+      for (i=0; i<n; i++) {
+        label_cluster (level, dim, m, i+k, 2*(i+k_son0), 2*(i+k_son1)+1, sg);
+      }
+    }
+    else {
+      for (i=0; i<n; i++) {
+        label_cluster (level, dim, m, i+k, i+k_son0, i+k_son1, sg);
+      }
+    }
+  }
+  else {
+    if (dim == m) {
+      for (i=0; i<n; i++) {
+        s = sg->s[level-1][i+k];
+        s->son[0] = sg->s[level][2*(i+k_son0)] 
+                  = new_spatialcluster (sg->dim, s->bmin, s->bmax, sons);
+        s->son[1] = sg->s[level][2*(i+k_son1)+1]
+                  = new_spatialcluster (sg->dim, s->bmin, s->bmax, sons);
+        d = 0.5 * (s->bmax[m]-s->bmin[m]);
+        s->son[0]->bmax[m] -= d;
+        s->son[1]->bmin[m] += d; 
+      }
+    }
+    else {
+      for (i=0; i<n; i++) {
+        s = sg->s[level-1][i+k];
+        s->son[0] = sg->s[level][i+k_son0] 
+                  = new_spatialcluster (sg->dim, s->bmin, s->bmax, sons);
+        s->son[1] = sg->s[level][i+k_son1]
+                  = new_spatialcluster (sg->dim, s->bmin, s->bmax, sons);
+        d = 0.5 * (s->bmax[m]-s->bmin[m]);
+        s->son[0]->bmax[m] -= d;
+        s->son[1]->bmin[m] += d; 
+      }
+    }
+  }
+}
+
 pspatialcluster
-init_spatialgeometry(uint maxdepth, real maxdiam, pspatialgeometry sg)
+init_spatialgeometry(uint maxdepth, real mindiam, pspatialgeometry sg)
 {
-  preal bmin, bmax, _bmin, d;
-  uint i, k, depth, l, m, r, s, dim, desc;
-  uint *n, *j, *n_prod;
+  preal bmin, bmax;
+  uint i, k, depth, level, m, dim;
   real diam, x, y;
   uint** splits_temp;
-  bool fw;
   
-  assert (maxdepth > 0 && maxdiam > 0.0);
+  assert (maxdepth > 0 && mindiam > 0.0);
   
   dim = sg->dim;
   diam = 0.0;
@@ -64,8 +126,8 @@ init_spatialgeometry(uint maxdepth, real maxdiam, pspatialgeometry sg)
   diam = REAL_SQRT(diam);
   
   /* Find upper bound for the needed depth. */
-  if (diam > maxdiam) {
-    depth = dim * ceil (REAL_LOG(diam/maxdiam)/REAL_LOG(2.0));
+  if (diam > mindiam) {
+    depth = dim * ceil (REAL_LOG(diam/mindiam)/REAL_LOG(2.0));
   }
   else {
     depth = 0;
@@ -81,7 +143,7 @@ init_spatialgeometry(uint maxdepth, real maxdiam, pspatialgeometry sg)
   for (i=0; i<dim; i++) {
     splits_temp[0][i] = 0;
   }
-  while (depth < maxdepth && diam > maxdiam) {
+  while (depth < maxdepth && diam > mindiam) {
     x = 0.0;
     for (i=0; i<dim; i++) {
       y = bmax[i]-bmin[i];
@@ -106,110 +168,37 @@ init_spatialgeometry(uint maxdepth, real maxdiam, pspatialgeometry sg)
   }
   sg->depth = depth;
   sg->splits = (uint **) allocmem((size_t) (depth+1)*sizeof(uint *));
-  for (l=0;l<=depth;l++) {
-    sg->splits[l] = allocuint(dim);
+  for (level=0; level<=depth; level++) {
+    sg->splits[level] = allocuint(dim);
     for (i=0; i<dim; i++) {
-      sg->splits[l][i] = splits_temp[l][i];
+      sg->splits[level][i] = splits_temp[level][i];
     }
   }
   
   /* Set up spatial clusters */
-  d = allocreal (dim);
-  n = allocuint (dim);
-  n_prod = allocuint (dim+1);
-  j = allocuint (dim);
-  _bmin = allocreal (dim);
-  for (i=0; i<dim; i++) {
-    _bmin[i] = bmin[i] = sg->bmin [i];
-    bmax[i] = sg->bmax[i];
-    d[i] = bmax[i]-bmin[i];
-    n[i] = 1;
-    j[i] = 0;
-    n_prod[i] = 1;
-  }
-  n_prod[dim] = 1;
-  desc = (1<<(depth+1)) - 1;
+  
   sg->s = (pspatialcluster **) allocmem((size_t) (depth+1)*sizeof(pspatialcluster *));
-  for (l=0; l<=depth; l++) {
-    if (l>=1) {
-      for (i=0; i<dim; i++) {
-        if (splits_temp[l][i]-splits_temp[l-1][i]==1) {
-          m = i;
-        }
-      }
-      n[m] *= 2;
-      d[m] /= 2.0;
-      bmax[m] = bmin[m]+d[m];
-      for (i=m+1; i<=dim; i++) {
-        n_prod[i] *= 2;
-      }
-      desc -= 1<<(depth-l+1);
-    }
-    
-    sg->s[l] = (pspatialcluster *) allocmem((size_t) n_prod[dim]*sizeof(pspatialcluster));
-    
-    k = 0;
-    if (l == depth) {
-        sg->s[l][k] = new_spatialcluster (dim, bmin, bmax,0,desc);
-    }
-    else {
-      sg->s[l][k] = new_spatialcluster (dim, bmin, bmax,2,desc);
-    }
-    
-    if (l>=1) {
-          sg->s[l-1][k]->son[0] = sg->s[l][k];
-    }
-    
-    k++;
-    fw = true;;
-    while (fw) {
-      for (i=0; i<dim; i++) {
-        j[i]++;
-        if (j[i] < n[i]) {
-          bmin[i] += d[i];
-          bmax[i] += d[i];
-          if (l == depth) {
-            sg->s[l][k] = new_spatialcluster (dim, bmin, bmax,0,desc);
-          }
-          else {
-            sg->s[l][k] = new_spatialcluster (dim, bmin, bmax,2,desc);
-          }
-          
-          if (l>=1) {
-            r = 0;
-              for (s=m+1; s<dim; s++) {
-                r += j[s] * n_prod[s];
-              }
-              r*= 0.5;
-              if (j[m]%2 == 0) {
-                sg->s[l-1][k-r-j[m]/2*n_prod[m]]->son[0] = sg->s[l][k];
-              }
-              else {
-                sg->s[l-1][k-r-(j[m]+1)/2*n_prod[m]]->son[1] = sg->s[l][k];
-              }
-              
-          }
-            
-          k++;
-          fw = true;
-          break;
-        }
-        else {
-          j[i] = 0;
-          bmin[i] = _bmin[i];
-          bmax[i] = bmin[i]+d[i];
-          fw = false;
-        }
+  sg->s[0] = (pspatialcluster *) allocmem ((size_t) (sizeof (pspatialcluster)));
+  sg->s[0][0] = (depth == 0 ? new_spatialcluster (dim, sg->bmin, sg->bmax, 0) : 
+                 new_spatialcluster (dim, sg->bmin, sg->bmax, 2));
+  for (level=1; level<=depth; level++) {
+    sg->s[level] 
+      = (pspatialcluster *) allocmem ((size_t) ((1<<level) * sizeof (pspatialcluster)));
+    for (i=0; i<dim; i++) {
+      if (splits_temp[level][i]-splits_temp[level-1][i]==1) {
+        m = i;
       }
     }
+    label_cluster (level, dim, m, 0, 0, 0, sg);
   }
-  freemem (n);
-  freemem (j);
+  
+  update_spatialcluster (sg->s[0][0]);
+  
   freemem (bmin);
   freemem (bmax);
-  freemem (_bmin);
-  freemem (n_prod);
-  freemem (d);
+  for (level=0; level<=depth; level++) {
+    freemem (splits_temp[level]);
+  }
   freemem (splits_temp);
   
   return sg->s[0][0];
@@ -251,11 +240,13 @@ initPoints_spatialgeometry (uint nidx, pcreal *x, pspatialgeometry sg) {
   uint i, j, n, nr, depth;
   pspatialcluster s;
   
+  freemem (sg->s[0][0]->idx);
   if (nidx >= 1) {
     depth = sg->depth;
     n = countonlevel_spatialgeometry (depth, sg);
     
-    idx = allocuint (nidx);
+    sg->s[0][0]->idx = allocuint (nidx);
+    idx = sg->s[0][0]->idx;
     count = allocuint (n);
     for (j=0; j<n; j++) {
       count[j] = 0;

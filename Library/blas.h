@@ -3,6 +3,7 @@
 #define BLAS_H
 
 #include "settings.h"
+#include "basic.h"
 
 #if defined(__GNUC__) && defined(USE_BLAS)
 INLINE_PREFIX void

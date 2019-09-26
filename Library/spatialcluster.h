@@ -45,10 +45,11 @@ struct _spatialcluster {
   /** @brief Pointers to sons. */
   pspatialcluster *son;
   
-  /** @brief Number of descendants. */
+  /** @brief Number of clusters in entire subtree below. */
   uint desc;
   
-  /** @brief Number of point indices for leaf clusters. */
+  /** @brief Number of indices for leaf clusters. 
+      Number of indices in entire subtree for non-leaf clusters.  */
   uint nidx;
   
   /** @brief Point indices for leaf clusters. */
@@ -71,10 +72,9 @@ struct _spatialcluster {
  * @param bmin Minimal coordinates of the bounding box.
  * @param bmax Maximal coordinates of the bounding box.
  * @param sons Number of sons.
- * @param desc Number of descendants.
  * @returns New @ref spatialcluster object.*/
 HEADER_PREFIX pspatialcluster
-new_spatialcluster(uint dim, preal bmin, preal bmax, uint sons, uint desc);
+new_spatialcluster(uint dim, preal bmin, preal bmax, uint sons);
 
 /** @brief Delete a @ref spatialcluster object.
  * 
@@ -89,6 +89,7 @@ del_spatialcluster(pspatialcluster s);
  * 
  * Recursively adds alls numbers of indices of the descendants of the given 
  * @ref spatialcluster object once the index sets of the leaf clusters have been set.
+ * Also updates the number of descendants.
  * 
  * @param s The @ref spatialcluster object to be updated. */
 HEADER_PREFIX void

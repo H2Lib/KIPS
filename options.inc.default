@@ -32,7 +32,7 @@ USE_TRIQUADPOINTS=1
 USE_CAIRO=1
 
 # Use OpenMP for parallelization
-USE_OPENMP=1
+#USE_OPENMP=1
 
 # Use OpenCL for heterogeneous computing
 USE_OPENCL=1

@@ -102,13 +102,13 @@ del_spatialgeometry(pspatialgeometry sg);
  * @ref spatialgeometry object.
  * 
  * @param maxdepth Maximal depth of the resulting @ref spatialcluster tree.
- * @param maxdiam Maximal diameter for a leaf @ref spatialcluster. Note 
- * that the algorith will stop when either maxdepth OR maxdiam ar reached. 
+ * @param mindiam Minimal diameter for a leaf @ref spatialcluster. Note 
+ * that the algorith will stop when either maxdepth OR mindiam ar reached. 
  * @param sg The @ref spatialgeometry object containing the root bounding 
  * box. Will be updated with bookkeeping information.
  * @returns The root @ref spatialcluster.*/
 HEADER_PREFIX pspatialcluster
-init_spatialgeometry(uint maxdepth, real maxdiam, pspatialgeometry sg);
+init_spatialgeometry(uint maxdepth, real mindiam, pspatialgeometry sg);
 
 /** @brief Find a @ref spatialcluster containing a certain point inside a
  * given @ref spatialgeometry.

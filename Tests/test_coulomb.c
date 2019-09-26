@@ -108,7 +108,7 @@ main (int argc, char **argv) {
   sg = new_spatialgeometry (dim, bmin, bmax);
   sroot = init_spatialgeometry (maxdepth, maxdiam, sg);
   printf ("%u spatial clusters\n", sroot->desc);
-  p = setparameters_coulomb (sp, alpha, R, sg);
+  p = setparametersPotential_coulomb (sp, alpha, R, sg);
   km = new_kernelmatrix (dim, 0, m);
   km->g = &kernel_coulomb;
   km->data = p;
@@ -123,7 +123,7 @@ main (int argc, char **argv) {
 
   printf("Filling cluster basis\n");
   start_stopwatch(sw);
-  fill_clusterbasis_kernelmatrix(km, cb);
+  fill_clusterbasis_kernelmatrix(false, km, cb);
   t_setup = stop_stopwatch(sw);
   sz = getsize_clusterbasis(cb);
   printf("  %.2f seconds\n" "  %.1f MB\n" "  %.1f KB/DoF\n", 
@@ -132,7 +132,7 @@ main (int argc, char **argv) {
   printf("Creating raw H^2-matrix\n");
   start_stopwatch(sw);
   Gh2 = build_fromblock_h2matrix(broot, cb, cb);
-  fill_h2matrix_kernelmatrix(km, Gh2);
+  fill_h2matrix_kernelmatrix(false, km, Gh2);
   t_setup = stop_stopwatch(sw);
   sz = getsize_h2matrix(Gh2);
   printf("  %.2f seconds\n", t_setup);
@@ -174,7 +174,7 @@ main (int argc, char **argv) {
   printf ("Updating H2-Matrix\n");
   start_stopwatch(sw);
   update_kernelmatrix (points, x, km);
-  update_h2matrix_kernelmatrix (km, Gh2);
+  update_h2matrix_kernelmatrix (false, km, Gh2);
   t_setup = stop_stopwatch (sw);
   printf ("  %.6f seconds\n", t_setup);
   sz = getsize_h2matrix(Gh2);
@@ -187,7 +187,7 @@ main (int argc, char **argv) {
   printf("Filling reference matrix\n");
   G = new_amatrix(points, points);
   start_stopwatch(sw);
-  fillN_kernelmatrix(0, 0, km, G);
+  fillN_kernelmatrix(false, NULL, NULL, km, G);
   t_setup = stop_stopwatch(sw);
   sz = getsize_amatrix(G);
   printf("  %.2f seconds\n" "  %.1f MB\n" "  %.1f KB/DoF\n", 
@@ -212,6 +212,7 @@ main (int argc, char **argv) {
   printf ("\t via compressed matrix: M = %10.8f    relative error: %10.8f\n", M, REAL_ABS((M-M_NaCl)/M_NaCl));
   
   printf ("Cleaning up\n");
+  del_stopwatch (sw);
   del_spatialgeometry (sg);
   del_spatialcluster (sroot);
   del_block (broot);

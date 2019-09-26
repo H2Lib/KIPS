@@ -8,7 +8,7 @@ KIPS_CORE0 = \
 	Library/settings.c \
 	Library/parameters.c \
 	Library/interpolation.c \
-  Library/blas.c 
+  	Library/blas.c 
 
 KIPS_CORE1 = \
 	Library/avector.c \
@@ -46,7 +46,8 @@ SOURCES_stable := \
 	Tests/test_amatrix.c \
 	Tests/test_interpolation.c \
 	Tests/test_kernelmatrix.c \
-  	Tests/test_coulomb.c
+  	Tests/test_coulomb.c \
+	Tests/test_coulomb_gradient.c
 
 SOURCES_tests = \
 	$(SOURCES_stable)

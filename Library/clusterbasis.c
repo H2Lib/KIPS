@@ -22,6 +22,7 @@ init_raw_clusterbasis(pclusterbasis cb, pcspatialcluster t)
   cb->t = t;
   cb->k = 0;
   cb->ktree = 0;
+  cb->d = 1;
 
   cb->sons = 0;
   cb->son = 0;
@@ -131,7 +132,7 @@ update_clusterbasis(pclusterbasis cb)
   stree = 0;
 
   if (cb->sons == 0) {
-    stree += cb->t->nidx;
+    stree += cb->d * cb->t->nidx;
   }
   else {
     for (i = 0; i < cb->sons; i++)
@@ -151,7 +152,7 @@ setrank_clusterbasis(uint k, pclusterbasis cb)
       resize_amatrix(&cb->son[i]->E, cb->son[i]->k, k);
   }
   else
-    resize_amatrix(&cb->V, cb->t->nidx, k);
+    resize_amatrix(&cb->V, cb->d * cb->t->nidx, k);
 
   cb->k = k;
 
@@ -252,7 +253,7 @@ forward_clusterbasis(pcclusterbasis cb, pcavector x, pavector xt)
 {
   avector   loc1, loc2;
   pavector  xt1, xc, xp;
-  uint      i, xtoff;
+  uint      i, xtoff, l, d, nidx, *idx;
 
   assert(xt->size == cb->ktree);
 
@@ -284,13 +285,20 @@ forward_clusterbasis(pcclusterbasis cb, pcavector x, pavector xt)
     assert(xtoff == cb->ktree);
   }
   else {
+    nidx = cb->t->nidx;
+    idx = cb->t->idx;
+    d = cb->d;
+    
     /* Permuted entries of x */
-    xp = init_sub_avector(&loc2, xt, cb->t->nidx, cb->k);
+    xp = init_sub_avector(&loc2, xt, d * nidx, cb->k);
 
     /* Find and copy entries */
-    for (i = 0; i < cb->t->nidx; i++)
-      xp->v[i] = x->v[cb->t->idx[i]];
-
+    for (i=0; i<nidx; i++) {
+      for (l=0; l<d; l++) {
+        xp->v[d * i + l] = x->v[d * idx[i] + l];
+      }
+    }
+      
     /* Multiply by leaf matrix */
     addevaltrans_amatrix(1.0, &cb->V, xp, xc);
 
@@ -305,7 +313,7 @@ backward_clusterbasis(pcclusterbasis cb, pavector yt, pavector y)
 {
   avector   loc1, loc2;
   pavector  yt1, yc, yp;
-  uint      i, ytoff;
+  uint      i, ytoff, nidx, l, d, *idx;
 
   assert(yt->size == cb->ktree);
 
@@ -336,16 +344,22 @@ backward_clusterbasis(pcclusterbasis cb, pavector yt, pavector y)
     assert(ytoff == cb->ktree);
   }
   else {
+    nidx = cb->t->nidx;
+    idx = cb->t->idx;
+    d = cb->d;
+    
     /* Permuted entries of x */
-    yp = init_sub_avector(&loc2, yt, cb->t->nidx, cb->k);
+    yp = init_sub_avector(&loc2, yt, d * nidx, cb->k);
 
     /* Multiply by leaf matrix */
     addeval_amatrix(1.0, &cb->V, yc, yp);
 
     /* Find and copy entries */
-    for (i = 0; i < cb->t->nidx; i++)
-      y->v[cb->t->idx[i]] += yp->v[i];
-
+    for (i = 0; i < nidx; i++) {
+      for (l=0; l<d; l++) {
+        y->v[d * idx[i] + l] += yp->v[d * i + l];
+      }
+    }
     uninit_avector(yp);
   }
 

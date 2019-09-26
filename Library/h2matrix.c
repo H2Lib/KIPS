@@ -30,6 +30,7 @@ new_h2matrix(pclusterbasis rb, pclusterbasis cb)
   h2->son = NULL;
   h2->rsons = 0;
   h2->csons = 0;
+  h2->d = 1;
 
   h2->desc = 0;
 
@@ -51,13 +52,14 @@ new_uniform_h2matrix(pclusterbasis rb, pclusterbasis cb)
 }
 
 ph2matrix
-new_full_h2matrix(pclusterbasis rb, pclusterbasis cb)
+new_full_h2matrix(uint d, pclusterbasis rb, pclusterbasis cb)
 {
   ph2matrix h2;
 
   h2 = new_h2matrix(rb, cb);
 
-  h2->f = new_amatrix(rb->t->nidx, cb->t->nidx);
+  h2->d = d;
+  h2->f = new_amatrix (d*rb->t->nidx, cb->t->nidx);
 
   h2->desc = 1;
 
@@ -118,23 +120,23 @@ clonestructure_h2matrix(pch2matrix G, pclusterbasis rb, pclusterbasis cb)
 
     for (j = 0; j < csons; j++)
       for (i = 0; i < rsons; i++) {
-	G1 = G->son[i + j * rsons];
+        G1 = G->son[i + j * rsons];
 
-	rb1 = rb;
-	if (G1->rb->t != G->rb->t) {
-	  assert(rb->sons == rsons);
-	  rb1 = rb->son[i];
-	}
+        rb1 = rb;
+        if (G1->rb->t != G->rb->t) {
+          assert(rb->sons == rsons);
+          rb1 = rb->son[i];
+        }
 
-	cb1 = cb;
-	if (G1->cb->t != G->cb->t) {
-	  assert(cb->sons == csons);
-	  cb1 = cb->son[j];
-	}
+        cb1 = cb;
+        if (G1->cb->t != G->cb->t) {
+          assert(cb->sons == csons);
+          cb1 = cb->son[j];
+        }
 
-	H1 = clonestructure_h2matrix(G1, rb1, cb1);
+        H1 = clonestructure_h2matrix(G1, rb1, cb1);
 
-	H->son[i + j * rsons] = H1;
+        H->son[i + j * rsons] = H1;
       }
 
   }
@@ -143,7 +145,7 @@ clonestructure_h2matrix(pch2matrix G, pclusterbasis rb, pclusterbasis cb)
     clear_amatrix(&H->u->S);
   }
   else if (G->f) {
-    H = new_full_h2matrix(rb, cb);
+    H = new_full_h2matrix (G->d, rb, cb);
     clear_amatrix(H->f);
   }
   else
@@ -173,23 +175,23 @@ clone_h2matrix(pch2matrix G, pclusterbasis rb, pclusterbasis cb)
 
     for (j = 0; j < csons; j++)
       for (i = 0; i < rsons; i++) {
-	G1 = G->son[i + j * rsons];
+        G1 = G->son[i + j * rsons];
 
-	rb1 = rb;
-	if (G1->rb->t != G->rb->t) {
-	  assert(rb->sons == rsons);
-	  rb1 = rb->son[i];
-	}
+        rb1 = rb;
+        if (G1->rb->t != G->rb->t) {
+          assert(rb->sons == rsons);
+          rb1 = rb->son[i];
+        }
 
-	cb1 = cb;
-	if (G1->cb->t != G->cb->t) {
-	  assert(cb->sons == csons);
-	  cb1 = cb->son[j];
-	}
+        cb1 = cb;
+        if (G1->cb->t != G->cb->t) {
+          assert(cb->sons == csons);
+          cb1 = cb->son[j];
+        }
 
-	H1 = clone_h2matrix(G1, rb1, cb1);
+        H1 = clone_h2matrix(G1, rb1, cb1);
 
-	H->son[i + j * rsons] = H1;
+        H->son[i + j * rsons] = H1;
       }
 
   }
@@ -198,7 +200,7 @@ clone_h2matrix(pch2matrix G, pclusterbasis rb, pclusterbasis cb)
     copy_uniform(false, G->u, H->u);
   }
   else if (G->f) {
-    H = new_full_h2matrix(rb, cb);
+    H = new_full_h2matrix(G->d, rb, cb);
     copy_amatrix(false, G->f, H->f);
   }
   else
@@ -224,7 +226,7 @@ update_h2matrix(ph2matrix h2)
 
     for (j = 0; j < csons; j++)
       for (i = 0; i < rsons; i++)
-	desc += h2->son[i + j * rsons]->desc;
+	      desc += h2->son[i + j * rsons]->desc;
   }
 
   h2->desc = desc;
@@ -240,7 +242,7 @@ del_h2matrix(ph2matrix h2)
   if (h2->son) {
     for (j = 0; j < csons; j++)
       for (i = 0; i < rsons; i++)
-	del_h2matrix(h2->son[i + j * rsons]);
+	      del_h2matrix(h2->son[i + j * rsons]);
     freemem(h2->son);
   }
 
@@ -352,7 +354,7 @@ clear_h2matrix(ph2matrix h2)
 
     for (j = 0; j < csons; j++)
       for (i = 0; i < rsons; i++)
-	clear_h2matrix(h2->son[i + j * rsons]);
+	      clear_h2matrix(h2->son[i + j * rsons]);
   }
   else if (h2->u)
     clear_amatrix(&h2->u->S);
@@ -370,7 +372,7 @@ scale_h2matrix(field alpha, ph2matrix h2)
   if (h2->son) {
     for (j = 0; j < csons; j++)
       for (i = 0; i < rsons; i++)
-	scale_h2matrix(alpha, h2->son[i + j * rsons]);
+	      scale_h2matrix(alpha, h2->son[i + j * rsons]);
   }
   else if (h2->u)
     scale_uniform(alpha, h2->u);
@@ -388,7 +390,7 @@ random_h2matrix(ph2matrix h2)
   if (h2->son) {
     for (j = 0; j < csons; j++)
       for (i = 0; i < rsons; i++)
-	random_h2matrix(h2->son[i + j * rsons]);
+	      random_h2matrix(h2->son[i + j * rsons]);
   }
   else if (h2->u)
     random_uniform(h2->u);
@@ -419,29 +421,29 @@ build_fromblock_h2matrix(pcblock b, pclusterbasis rb, pclusterbasis cb)
 
     for (j = 0; j < csons; j++)
       for (i = 0; i < rsons; i++) {
-	b1 = b->son[i + j * rsons];
+        b1 = b->son[i + j * rsons];
 
-	rb1 = rb;
-	if (b1->rc != b->rc) {
-	  assert(rb->sons == rsons);
-	  rb1 = rb->son[i];
-	}
+        rb1 = rb;
+        if (b1->rc != b->rc) {
+          assert(rb->sons == rsons);
+          rb1 = rb->son[i];
+        }
 
-	cb1 = cb;
-	if (b1->cc != b->cc) {
-	  assert(cb->sons == csons);
-	  cb1 = cb->son[j];
-	}
+        cb1 = cb;
+        if (b1->cc != b->cc) {
+          assert(cb->sons == csons);
+          cb1 = cb->son[j];
+        }
 
-	h1 = build_fromblock_h2matrix(b1, rb1, cb1);
+        h1 = build_fromblock_h2matrix(b1, rb1, cb1);
 
-	h->son[i + j * rsons] = h1;
+        h->son[i + j * rsons] = h1;
       }
   }
   else if (b->adm)
     h = new_uniform_h2matrix(rb, cb);
-  else
-    h = new_full_h2matrix(rb, cb);
+  else 
+    h = new_full_h2matrix(rb->d, rb, cb);
 
   update_h2matrix(h);
 
@@ -523,7 +525,7 @@ fastaddeval_h2matrix(field alpha, pch2matrix h2, pcavector xt, pavector yt)
   }
   else if (h2->f) {
     xp = init_sub_avector(&loc1, (pavector) xt, cb->t->nidx, cb->k);
-    yp = init_sub_avector(&loc2, yt, rb->t->nidx, rb->k);
+    yp = init_sub_avector(&loc2, yt, rb->d * rb->t->nidx, rb->k);
 
     addeval_amatrix(alpha, h2->f, xp, yp);
 
@@ -608,7 +610,7 @@ fastaddevaltrans_h2matrix(field alpha, pch2matrix h2,
     uninit_avector(xt1);
   }
   else if (h2->f) {
-    xp = init_sub_avector(&loc1, (pavector) xt, rb->t->nidx, rb->k);
+    xp = init_sub_avector(&loc1, (pavector) xt, rb->d * rb->t->nidx, rb->k);
     yp = init_sub_avector(&loc2, yt, cb->t->nidx, cb->k);
 
     addevaltrans_amatrix(alpha, h2->f, xp, yp);
@@ -1233,24 +1235,24 @@ addevaltrans_otf_h2matrix(field alpha,
 real
 norm2_h2matrix(pch2matrix H2)
 {
-  return norm2_matrix((mvm_t) mvm_h2matrix, (void *) H2,
-		      H2->rb->t->nidx, H2->cb->t->nidx);
+  return norm2_matrix ((mvm_t) mvm_h2matrix, (void *) H2, 
+                       H2->rb->d * H2->rb->t->nidx, H2->cb->t->nidx);
 }
 
 real
 norm2diff_h2matrix(pch2matrix a, pch2matrix b)
 {
-  return norm2diff_matrix((mvm_t) mvm_h2matrix, (void *) a,
-			  (mvm_t) mvm_h2matrix, (void *) b,
-			  a->rb->t->nidx, a->cb->t->nidx);
+  return norm2diff_matrix ((mvm_t) mvm_h2matrix, (void *) a, 
+                           (mvm_t) mvm_h2matrix, (void *) b, 
+                           a->rb->d * a->rb->t->nidx, a->cb->t->nidx);
 }
 
 real
 norm2diff_amatrix_h2matrix(pch2matrix a, pcamatrix b)
 {
-  return norm2diff_matrix((mvm_t) mvm_h2matrix, (void *) a,
-			  (mvm_t) mvm_amatrix, (void *) b,
-			  a->rb->t->nidx, a->cb->t->nidx);
+  return norm2diff_matrix ((mvm_t) mvm_h2matrix, (void *) a, 
+                           (mvm_t) mvm_amatrix, (void *) b, 
+                           a->rb->d * a->rb->t->nidx, a->cb->t->nidx);
 }
 
 /* ------------------------------------------------------------

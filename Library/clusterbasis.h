@@ -50,6 +50,12 @@ struct _clusterbasis {
   /** @brief Sum of ranks in entire subtree below <tt>t</tt> */
   uint ktree;
 
+  /** @brief Multiplicity of leaf matrices. For <tt>d>1</tt>, the leaf matrices 
+      are a composite of <tt>d</tt> leaf matrices. E. g. for gradients, each 
+      block of <tt>d</tt> rows belongs to the gradient evaluated in a certain point. 
+      A multiplicity greater than 1 should only be used for a row cluster basis. */
+  uint d;
+  
   /** @brief Leaf matrix @f$V_t@f$ */
   amatrix V;
   /** @brief Transfer matrix @f$E_t@f$ to father */
