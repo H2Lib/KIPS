@@ -13,32 +13,25 @@
  * ------------------------------------------------------------ */
 
 pkernelmatrix
-new_kernelmatrix(uint dim, uint points, uint m)
+new_kernelmatrix(uint dim, uint m)
 {
   pkernelmatrix km;
-  real *x0;
   uint i;
 
   /* Initialize basic structure */
   km = (pkernelmatrix) allocmem(sizeof(kernelmatrix));
   km->dim = dim;
-  km->points = points;
   km->m = m;
 
   /* Empty kernel callback function */
   km->g = 0;
   km->data = 0;
   km->f = 0;
-
-  /* Initialize arrays for point coordinates */
-  if (points > 0) {
-    km->x = (real **) allocmem(sizeof(real *) * points);
-    km->x[0] = x0 = allocreal(points * dim);
-    for(i=1; i<points; i++) {
-      x0 += dim;
-      km->x[i] = x0;
-    }
-  }
+  
+  /* Empty point coordinates and type flags */
+  km->points = 0;
+  km->x = 0;
+  km->type = 0;
 
   /* Initialize Chebyshev points */
   km->xi_ref = allocreal(m);
@@ -55,24 +48,17 @@ new_kernelmatrix(uint dim, uint points, uint m)
 void
 del_kernelmatrix(pkernelmatrix km)
 {
-  freemem(km->xi_ref);
-  if (km->points > 0) {
-    freemem(km->x[0]);
-    freemem(km->x);
-  }
-  freemem(km);
+  freemem (km->xi_ref);
+  freemem (km);
 }
 
 /* ------------------------------------------------------------
  * Update a kernelmatrix object with new points
  * ------------------------------------------------------------ */
  void 
- update_kernelmatrix (uint points, preal *x, pkernelmatrix km) {
-   if (km->points > 0) {
-     freemem (km->x[0]);
-     freemem (km->x);
-   }
+ update_kernelmatrix (uint points, preal *x, uint *type, pkernelmatrix km) {
    km->x = x;
+   km->type = type;
    km->points = points;
  }
 
@@ -85,6 +71,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
                    pckernelmatrix km, pamatrix N)
 {
   const real **x = (const real **) km->x;
+  uint *type = km->type;
   uint rows = N->rows;
   uint cols = N->cols;
   pfield Na = N->a;
@@ -104,7 +91,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
           jj = cidx[j];
           for(i=0; i<nidx; i++) {
             ii = ridx[i];
-            f(x[ii], x[jj], data, Na + d * i + j * ldN);
+            f(x[ii], x[jj], type[ii], type[jj], data, Na + d * i + j * ldN);
           }
         }
       }
@@ -113,7 +100,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
         for(j=0; j<cols; j++) {
           for(i=0; i<nidx; i++) {
             ii = ridx[i];
-            f(x[ii], x[j], data, Na + d * i + j * ldN);
+            f(x[ii], x[j], type[ii], type[j], data, Na + d * i + j * ldN);
           }
         }
       }
@@ -125,7 +112,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
         for(j=0; j<cols; j++) {
           jj = cidx[j];
           for(i=0; i<nidx; i++) {
-            f(x[i], x[jj], data, Na + d * i + j * ldN);
+            f(x[i], x[jj], type[i], type[jj], data, Na + d * i + j * ldN);
           }
         }
       }
@@ -133,7 +120,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
         assert(cols <= km->points);
         for(j=0; j<cols; j++) {
           for(i=0; i<nidx; i++) {
-            f(x[i], x[j], data, Na + d * i + j * ldN);
+            f(x[i], x[j], type[i], type[j], data, Na + d * i + j * ldN);
           }
         }
       }
@@ -146,7 +133,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
           jj = cidx[j];
           for(i=0; i<rows; i++) {
             ii = ridx[i];
-            Na[i+j*ldN] = g(x[ii], x[jj], data);
+            Na[i+j*ldN] = g(x[ii], x[jj], type[ii], type[jj], data);
           }
         }
       }
@@ -155,7 +142,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
         for(j=0; j<cols; j++) {
           for(i=0; i<rows; i++) {
             ii = ridx[i];
-            Na[i+j*ldN] = g(x[ii], x[j], data);
+            Na[i+j*ldN] = g(x[ii], x[j], type[ii], type[j], data);
           }
         }
       }
@@ -167,7 +154,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
         for(j=0; j<cols; j++) {
           jj = cidx[j];
           for(i=0; i<rows; i++) {
-            Na[i+j*ldN] = g(x[i], x[jj], data);
+            Na[i+j*ldN] = g(x[i], x[jj], type[i], type[jj], data);
           }
         }
       }
@@ -175,7 +162,7 @@ fillN_kernelmatrix(bool grad, const uint *ridx, const uint *cidx,
         assert(cols <= km->points);
         for(j=0; j<cols; j++) {
           for(i=0; i<rows; i++) {
-            Na[i+j*ldN] = g(x[i], x[j], data);
+            Na[i+j*ldN] = g(x[i], x[j], type[i], type[j], data);
           }
         }
       }
@@ -220,10 +207,8 @@ transform_points(uint dim, real *bmin, real *bmax,
  * ------------------------------------------------------------ */
 
 static void
-fillS_1d(uint dim, uint i0, uint j0,
-	 const real **rxi, const real **cxi,
-	 pckernelmatrix km,
-	 real *xx, real *yy, pamatrix S)
+fillS_1d (uint dim, uint i0, uint j0, const real **rxi, const real **cxi, 
+          pckernelmatrix km, real *xx, real *yy, pamatrix S)
 {
   uint m = km->m;
   pfield Sa;
@@ -239,8 +224,7 @@ fillS_1d(uint dim, uint i0, uint j0,
 
       for(j=0; j<m; j++) {
         yy[dim] = cxi[dim][j];
-        fillS_1d(dim, i+i0*m, j+j0*m, rxi, cxi, km,
-           xx, yy, S);
+        fillS_1d(dim, i+i0*m, j+j0*m, rxi, cxi, km, xx, yy, S);
       }
     }
   }
@@ -259,17 +243,15 @@ fillS_1d(uint dim, uint i0, uint j0,
       for(j=0; j<m; j++) {
         yy[dim] = cxi[dim][j];
 
-        Sa[(i+i0*m)+(j+j0*m)*ldS] = g(xx, yy, km->data);
+        Sa[(i+i0*m)+(j+j0*m)*ldS] = g(xx, yy, 0, 0, km->data);
       }
     }
   }
 }
 
 static void
-fillS_2d(uint dim, uint i0, uint j0,
-	 const real **rxi, const real **cxi,
-	 pckernelmatrix km,
-	 real *xx, real *yy, pamatrix S)
+fillS_2d (uint dim, uint i0, uint j0, const real **rxi, const real **cxi, 
+          pckernelmatrix km, real *xx, real *yy, pamatrix S)
 {
   uint m = km->m;
   pfield Sa;
@@ -291,8 +273,8 @@ fillS_2d(uint dim, uint i0, uint j0,
 
           for(j2=0; j2<m; j2++) {
             yy[dim+1] = cxi[dim+1][j2];
-            fillS_2d(dim, i1+m*(i2+m*i0), j1+m*(j2+m*j0), rxi, cxi, km,
-               xx, yy, S);
+            fillS_2d(dim, i1+m*(i2+m*i0), j1+m*(j2+m*j0), rxi, cxi, km, 
+                     xx, yy, S);
           }
         }
       }
@@ -319,7 +301,8 @@ fillS_2d(uint dim, uint i0, uint j0,
           for(j2=0; j2<m; j2++) {
             yy[dim+1] = cxi[dim+1][j2];
 
-            Sa[(i1+m*(i2+m*i0)) + (j1+m*(j2+m*j0))*ldS] = g(xx, yy, km->data);
+            Sa[(i1+m*(i2+m*i0)) + (j1+m*(j2+m*j0))*ldS] 
+              = g(xx, yy, 0, 0, km->data);
           }
         }
       }
@@ -332,8 +315,8 @@ fillS_2d(uint dim, uint i0, uint j0,
 }
 
 void
-fillS_kernelmatrix(pcspatialcluster rc, pcspatialcluster cc,
-		   pckernelmatrix km, pamatrix S)
+fillS_kernelmatrix (pcspatialcluster rc, pcspatialcluster cc, 
+                    pckernelmatrix km, pamatrix S)
 {
   uint dim = km->dim;
   uint m = km->m;
@@ -675,14 +658,9 @@ fill_h2matrix_kernelmatrix (bool grad, pckernelmatrix km, ph2matrix G)
 {
   #ifdef USE_OPENMP
   #pragma omp parallel
-  {
-    #pragma omp single
-    fill_parallelH2matrix_kernelmatrix (grad, km, G);
-  }
-  
-  #else 
-  fill_parallelH2matrix_kernelmatrix (grad, km, G);
+  #pragma omp single
   #endif
+  fill_parallelH2matrix_kernelmatrix (grad, km, G);
 }
 
 static void
@@ -720,12 +698,7 @@ update_h2matrix_kernelmatrix (bool grad, pckernelmatrix km, ph2matrix G)
   
   #ifdef USE_OPENMP
   #pragma omp parallel
-  {
-    #pragma omp single
-    update_parallelH2matrix_kernelmatrix (grad, km, G);
-  }
-  
-  #else
-  update_parallelH2matrix_kernelmatrix (grad, km, G);
+  #pragma omp single
   #endif
+  update_parallelH2matrix_kernelmatrix (grad, km, G);
 }

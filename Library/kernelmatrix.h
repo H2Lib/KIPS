@@ -29,10 +29,11 @@ typedef kernelmatrix *pkernelmatrix;
 typedef const kernelmatrix *pckernelmatrix;
 
 /** @brief Pointer to a kernel function. */
-typedef real (*kernel) (pcreal xx, pcreal yy, void *data);
+typedef real (*kernel) (pcreal xx, pcreal yy, uint i, uint j, void *data);
 
 /** @brief Pointer to the gradient of a kernel function. */
-typedef void (*gradient) (pcreal xx, pcreal yy, void *data, pfield f);
+typedef void (*gradient) (pcreal xx, pcreal yy, uint i, uint j, void *data, 
+                          pfield f);
 
 /** @brief Representation of a kernel matrix an its approximation.
  *
@@ -61,6 +62,10 @@ struct _kernelmatrix {
 
   /** @brief Coordinates of points. */
   real **x;
+  
+  /** @brief Type flags for each point, e. g. molecule number. 
+   *        Zero is used for interpolation points exclusively. */
+  uint *type;
 
   /** @brief Interpolation order (i.e., number of interpolation points). */
   uint m;
@@ -71,14 +76,17 @@ struct _kernelmatrix {
 
 /** @brief Create an empty @ref kernelmatrix object.
  *
+ *  @remark Does not allocate storage for point coordinates and type flags.
+ *
  *  @param dim Spatial dimension.
- *  @param points Number of points.
  *  @param m Interpolation order.
  *  @returns New object. */
 HEADER_PREFIX pkernelmatrix
-new_kernelmatrix(uint dim, uint points, uint m);
+new_kernelmatrix(uint dim, uint m);
 
 /** @brief Delete a @ref kernelmatrix object.
+ *
+ *  @remark Does not free storage for point coordinates and type flags.
  *
  *  @param km Object to be deleted. */
 HEADER_PREFIX void
@@ -86,11 +94,14 @@ del_kernelmatrix(pkernelmatrix km);
 
 /** @brief Update a @ref kernelmatrix object with new points.
  *
+ *  @remark Does not free the storage of previous coordinate or flag arrays.
+ *
  *  @param points New number of points.
  *  @param x Location of new points.
+ *  @param type Type flags of new points.
  *  @param km Object to be updated. */
 HEADER_PREFIX void
-update_kernelmatrix (uint points, preal *x, pkernelmatrix km);
+update_kernelmatrix (uint points, preal *x, uint *type, pkernelmatrix km);
 
 HEADER_PREFIX void
 fillN_kernelmatrix (bool gradient, const uint *ridx, const uint *cidx, 

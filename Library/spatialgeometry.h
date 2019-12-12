@@ -59,8 +59,8 @@ struct _spatialgeometry {
 };
 
 /* ------------------------------------------------------------
-   Constructors and destructors
-   ------------------------------------------------------------ */
+ *   Constructors and destructors
+ * ------------------------------------------------------------ */
 
 /** @brief Create a new empty @ref spatialgeometry object.
  * 
@@ -85,8 +85,8 @@ HEADER_PREFIX void
 del_spatialgeometry(pspatialgeometry sg);
 
 /* ------------------------------------------------------------
-   Adaptive spatial cluster tree
-   ------------------------------------------------------------ */
+ *   Adaptive spatial cluster tree
+ * ------------------------------------------------------------ */
 
 /** @brief Build a @ref spatialcluster tree using a @ref spatialgeometry
  * object and adaptive clustering.
@@ -94,16 +94,15 @@ del_spatialgeometry(pspatialgeometry sg);
  * Builds an adaptive @ref spatialcluster tree from the bounding box
  * given in a @ref spatialgeometry object. Bisects every @ref spatialcluster
  * in the coordinate of maximal extension, until either the given maximal
- * depth is reached or every cluster on the current level has a diameter 
- * not greater than the given maximal diameter. In particular, all 
+ * depth is reached or a further bisection would give rise to clusters 
+ * with a smaller diameter than the given lower bound. In particular, all 
  * @ref spatialcluster objects on one level have congruent bounding boxes.
  * Information about the bisection steps and the pointers to the 
  * @ref spatialcluster objects are stored in the respective 
  * @ref spatialgeometry object.
  * 
  * @param maxdepth Maximal depth of the resulting @ref spatialcluster tree.
- * @param mindiam Minimal diameter for a leaf @ref spatialcluster. Note 
- * that the algorith will stop when either maxdepth OR mindiam ar reached. 
+ * @param mindiam Minimal diameter for a leaf @ref spatialcluster. 
  * @param sg The @ref spatialgeometry object containing the root bounding 
  * box. Will be updated with bookkeeping information.
  * @returns The root @ref spatialcluster.*/
@@ -140,11 +139,11 @@ findCluster_spatialgeometry(uint l, pcreal x, pcspatialgeometry sg, uint *nr);
  * @param x Vector array to be distributed.
  * @param sg The @ref spatialgeometry object to distribute in. */
 HEADER_PREFIX void
-initPoints_spatialgeometry (uint nidx, pcreal *x, pspatialgeometry sg);
+initPoints_spatialgeometry (uint nidx, preal *x, pspatialgeometry sg);
 
 /* ------------------------------------------------------------
-   Derived quantities
-   ------------------------------------------------------------ */
+ *   Derived quantities
+ * ------------------------------------------------------------ */
 
 /** @brief Determine the total number of @ref spatialcluster objects on 
  * one level of a given @ref spatialgeometry.
@@ -165,7 +164,6 @@ countonlevel_spatialgeometry (uint l, pcspatialgeometry sg);
  * on that level. */
 HEADER_PREFIX uint
 countindirection_spatialgeometry (uint l, uint d, pcspatialgeometry sg);
-
 
 /** @} */
 
