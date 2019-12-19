@@ -8,11 +8,13 @@
 #include <stdlib.h>
 
 static real
-kernel_newton(const real *xx, const real *yy, void *data)
+kernel_newton(const real *xx, const real *yy, uint tx, uint ty, void *data)
 {
   real norm2;
 
   (void) data;
+  (void) tx;
+  (void) ty;
 
   norm2 = REAL_SQR(xx[0] - yy[0]) + REAL_SQR(xx[1] - yy[1]) + REAL_SQR(xx[2] - yy[2]);
 
@@ -20,11 +22,13 @@ kernel_newton(const real *xx, const real *yy, void *data)
 }
 
 static real
-kernel_exp(const real *xx, const real *yy, void *data)
+kernel_exp(const real *xx, const real *yy, uint tx, uint ty, void *data)
 {
   real norm2;
 
   (void) data;
+  (void) tx;
+  (void) ty;
 
   norm2 = REAL_SQR(xx[0] - yy[0]) + REAL_SQR(xx[1] - yy[1]) + REAL_SQR(xx[2] - yy[2]);
 
@@ -32,11 +36,13 @@ kernel_exp(const real *xx, const real *yy, void *data)
 }
 
 static real
-kernel_log(const real *xx, const real *yy, void *data)
+kernel_log(const real *xx, const real *yy, uint tx, uint ty, void *data)
 {
   real norm2;
 
   (void) data;
+  (void) tx;
+  (void) ty;
 
   norm2 = REAL_SQR(xx[0] - yy[0]) + REAL_SQR(xx[1] - yy[1]) + REAL_SQR(xx[2] - yy[2]);
 
@@ -46,8 +52,9 @@ kernel_log(const real *xx, const real *yy, void *data)
 int
 main(int argc, char **argv)
 {
-  real eta, norm, error, mindiam, t_setup, *bmin, *bmax;
-  uint i, j, dim, points, m, maxdepth;
+  real eta, norm, error, mindiam, t_setup;
+  preal bmin, bmax, *x;
+  uint i, j, dim, points, m, maxdepth, *type;
   pspatialgeometry sg;
   pspatialcluster sroot;
   pblock broot;
@@ -75,7 +82,7 @@ main(int argc, char **argv)
   
   printf("Creating kernelmatrix object for %u points, order %u\n", points, m);
   
-  km = new_kernelmatrix(3, points, m);
+  km = new_kernelmatrix(dim, m);
   switch(kernel) {
   case 'e':
     printf("Exponential kernel function\n");
@@ -93,13 +100,21 @@ main(int argc, char **argv)
   printf ("Creating bounding box and random points\n");
   bmin = allocreal (dim);
   bmax = allocreal (dim);
+  x = (preal *) allocmem (points * sizeof (real *));
+  x[0] = allocreal (points * dim);
+  type = allocuint (points);
   for (i=0; i<dim; i++) {
     bmin[i] = -1.0;
     bmax[i] = 1.0;
-    for(j=0; j<points; j++) {
-        km->x[j][i] = FIELD_RAND();
-    }
   }
+  for(j=0; j<points; j++) {
+    x[j] = x[0] + j * dim;
+    for (i=0; i<dim; i++) {
+      x[j][i] = FIELD_RAND();
+    }
+    type[j] = j+1;
+  }
+  update_kernelmatrix (points, x, type, km);
   
   printf("Creating spatial cluster tree\n");
   sg = new_spatialgeometry (dim, bmin, bmax);
@@ -108,7 +123,7 @@ main(int argc, char **argv)
   
   printf ("Distributing random points to clusters\n");
   start_stopwatch (sw);
-  initPoints_spatialgeometry (points, (const real **)km->x, sg);
+  initPoints_spatialgeometry (points, km->x, sg);
   t_setup = stop_stopwatch (sw);
   printf ("%.6f seconds\n", t_setup);
   
@@ -161,6 +176,9 @@ main(int argc, char **argv)
   printf("  Spectral error %.3e (%.3e)\n", error, error/norm);
   
   printf ("Cleaning up\n");
+  freemem (x[0]);
+  freemem (x);
+  freemem (type);
   del_stopwatch (sw);
   del_amatrix (G);
   del_h2matrix (Gh2);

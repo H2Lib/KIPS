@@ -4,19 +4,19 @@
 #include <stdlib.h>
 #include "parameters.h"
 
-#define M_NaCl -1.747564594633
-#define a_NaCl 5.64
+real M_NaCl = -1.747564594633;
+real a_NaCl = 5.64e-10;
 
 int 
 main (int argc, char **argv) {
   preal bmin, bmax, x0, *x;
-  uint dim, i, *j, k, *n, l, m, s, maxdepth, points, kernel;
-  real eta, maxdiam, alpha, R, a, M, norm, error, t_setup;
+  uint dim, i, *j, k, *n, l, m, s, maxdepth, points, kernel, *type;
+  real eta, mindiam, alpha, R, a, M, norm, error, t_setup;
   pspatialgeometry sg;
   pspatialcluster sroot;
   pblock broot;
   pclusterbasis cb;
-  pparameters p;
+  pcoulomb p;
   split sp;
   bool fw;
   pkernelmatrix km;
@@ -29,7 +29,7 @@ main (int argc, char **argv) {
   init_kips (&argc, &argv);
   dim = 3;
   maxdepth = 8;
-  maxdiam = 0.01;
+  mindiam = 1.0e-13;
   a = a_NaCl;
   alpha = 0.0;
   m = 3;
@@ -57,7 +57,7 @@ main (int argc, char **argv) {
     sp = &split_DSF;
     alpha = askforreal ("Damping parameter?", "", 0.8/a);
   }
-  R = askforreal ("Cutoff radius?", "", 9.0);
+  R = askforreal ("Cutoff radius?", "", 9.0e-10);
   
   sw = new_stopwatch();
   bmin = allocreal (dim);
@@ -76,12 +76,11 @@ main (int argc, char **argv) {
   printf ("Creating bounding box and point charges\n");
   l = 0;
   s = 0;
+  q->v[0] = 1.0;
   for (i=0; i<dim; i++) {
     n[i] = 20;
     bmin[i] = 0.0;
-    bmax[i] = 10.0*a;
-    q->v[0] = 1.0;
-    // q->v[1] = -1.0;
+    bmax[i] = 10.0 * a;
     j[i] = 0;
   }
   l+=1;
@@ -106,10 +105,10 @@ main (int argc, char **argv) {
   
   printf("Creating spatial cluster tree and kernelmatrix object\n");
   sg = new_spatialgeometry (dim, bmin, bmax);
-  sroot = init_spatialgeometry (maxdepth, maxdiam, sg);
+  sroot = init_spatialgeometry (maxdepth, mindiam, sg);
   printf ("%u spatial clusters\n", sroot->desc);
-  p = setparametersPotential_coulomb (sp, alpha, R, sg);
-  km = new_kernelmatrix (dim, 0, m);
+  p = setParametersPotential_coulomb (sp, alpha, R, sg);
+  km = new_kernelmatrix (dim, m);
   km->g = &kernel_coulomb;
   km->data = p;
   
@@ -169,11 +168,15 @@ main (int argc, char **argv) {
   }
   
   printf ("Distributing point charges to clusters\n");
-  initPoints_spatialgeometry (points, (pcreal *) x, sg);
+  initPoints_spatialgeometry (points, x, sg);
+  type = allocuint (points);
+  for (i=0; i<points; i++) {
+    type[i] = i+1;
+  }
   
   printf ("Updating H2-Matrix\n");
   start_stopwatch(sw);
-  update_kernelmatrix (points, x, km);
+  update_kernelmatrix (points, x, type, km);
   update_h2matrix_kernelmatrix (false, km, Gh2);
   t_setup = stop_stopwatch (sw);
   printf ("  %.6f seconds\n", t_setup);
@@ -204,12 +207,14 @@ main (int argc, char **argv) {
   printf ("Computing Madelung constant of rock salt...\n");
   clear_avector (y);
   mvm_amatrix (1.0, false, G, q, y);
-  M = a/points * (0.5*dotprod_avector (q,y) + selfPotential_coulomb(sp,alpha,q,R));
-  printf ("\t via reference matrix: M = %10.8f    relative error: %10.8f\n", M, REAL_ABS((M-M_NaCl)/M_NaCl)); 
+  M = a/points * (0.5 * dotprod_avector (q,y) + selfterm_coulomb(sp,alpha,q,R));
+  printf ("\t via reference matrix: M = %10.8f    relative error: %10.8f\n", 
+          M, REAL_ABS((M-M_NaCl)/M_NaCl));
   clear_avector (y);
   mvm_h2matrix (1.0, false, Gh2, q, y);
-  M = a/points * (0.5*dotprod_avector (q,y) + selfPotential_coulomb(sp,alpha,q,R));
-  printf ("\t via compressed matrix: M = %10.8f    relative error: %10.8f\n", M, REAL_ABS((M-M_NaCl)/M_NaCl));
+  M = a / points * (0.5 * dotprod_avector (q,y) + selfterm_coulomb(sp,alpha,q,R));
+  printf ("\t via compressed matrix: M = %10.8f    relative error: %10.8f\n", 
+          M, REAL_ABS((M-M_NaCl)/M_NaCl));
   
   printf ("Cleaning up\n");
   del_stopwatch (sw);
@@ -217,7 +222,7 @@ main (int argc, char **argv) {
   del_spatialcluster (sroot);
   del_block (broot);
   del_clusterbasis (cb);
-  freemem (p);
+  delParameters_coulomb (p);
   del_kernelmatrix (km);
   freemem (j);
   freemem (n);

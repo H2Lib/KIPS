@@ -2,7 +2,7 @@
 #include <math.h>
 #include <stdio.h>
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Range splitting functions for cutoff schemes
  *  ---------------------------------------------------------------- */
 
@@ -122,7 +122,7 @@ derivative_SP3 (real alpha, real R, real r) {
 }
 
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Geometric data
  *  ---------------------------------------------------------------- */
 
@@ -132,7 +132,40 @@ mindiam_coulomb (real eta, real rmol) {
 }
 
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
+ *    Parameters
+ *  ---------------------------------------------------------------- */
+ 
+pcoulomb
+setParametersPotential_coulomb (split s, real alpha, real R, pcspatialgeometry sg) {
+  pcoulomb par = (pcoulomb) allocmem (sizeof (coulomb));
+  par->s = s;
+  par->alpha = alpha;
+  par->R = R;
+  par->sg = sg;
+  
+  return par;
+}
+
+pcoulomb
+setParametersGradient_coulomb (split s, split sd, real alpha, real R, 
+                               pcspatialgeometry sg) {
+  pcoulomb par = (pcoulomb) allocmem (sizeof (coulomb));
+  par->s = s;
+  par->sd = sd;
+  par->alpha = alpha;
+  par->R = R;
+  par->sg = sg;
+  
+  return par;
+}
+
+void
+delParameters_coulomb (pcoulomb c) {
+  freemem (c);
+}
+
+/** ----------------------------------------------------------------
  *    Coulomb Potential
  *  ---------------------------------------------------------------- */
  
@@ -141,34 +174,40 @@ mindiam_coulomb (real eta, real rmol) {
 static real 
 sum_potential_cutoff (uint dim, uint ldim, uint *j, uint *m, pcreal d, int *j0, 
                       bool exclude, split s, real alpha, real R, pcreal x, pcreal y){
-  uint i;
+  int i;
   real a, b, c, R2, r, V;
   V = 0.0;
+  bool exclude_new;
   
   if (dim > 1) {
     dim --;
     for (i=0; i<m[dim]; i++){
       j[dim] = i;
-      if (i != j0[dim]) {
-        exclude = false;
+      if (i == j0[dim]) {
+        exclude_new = exclude;
       }
-      V += sum_potential_cutoff (dim, ldim, j, m, d, j0, exclude, s, alpha, R, x, y);
+      else {
+        exclude_new = false;
+      }
+      V += sum_potential_cutoff (dim, ldim, j, m, d, j0, exclude_new, s, alpha, R, x, y);
     }
   }
   else {
     assert (dim == 1);
     R2 = R*R;
     c = 0.0;
-    for (i=0; i<ldim; i++){
+    for (i=ldim-1; i>=0; i--){
       a = y[i] + j[i] * d[i] - x[i];
       b = a * a;
       c += b;
     }
-    for (i=0; i<m[0]; i++) {
+    for (i=0; i<m[0]; i++) { 
       if (i != j0[0] || exclude == false) { 
         if (c < R2) {
           r = REAL_SQRT (c);
           V += s (alpha, R, r) / r;
+          if (c < 1.0e-20) {
+            }
         }
       }
       c -= b;
@@ -201,12 +240,12 @@ shortrangePotential_coulomb (pcreal x, pcreal y, bool exclude, pcoulomb par) {
   // Determine all periodic copies of y within the given radius around x.
   for (i=0; i<dim; i++) {
     d[i] = sg->bmax[i] - sg->bmin[i];
-    jmin = ceil ((y[i] - x[i] - R) / d[i]);
-    jmax = floor ((y[i] - x[i] + R) / d[i]);
+    jmin = ceil ((x[i] - y[i] - R) / d[i]);
+    jmax = floor ((x[i] - y[i] + R) / d[i]);
     m[i] = (jmax < jmin ? 0 : jmax-jmin+1);
     z[i] = y[i] + jmin * d[i];
     j[i] = 0;
-    j0[i] = jmin;
+    j0[i] = -jmin;
   }
   
   V = sum_potential_cutoff (dim, dim, j, m, d, j0, exclude, s, alpha, R, x, z);
@@ -220,16 +259,6 @@ shortrangePotential_coulomb (pcreal x, pcreal y, bool exclude, pcoulomb par) {
   return V;
 }
 
-pcoulomb
-setparametersPotential_coulomb (split s, real alpha, real R, pcspatialgeometry sg) {
-  pcoulomb par = (pcoulomb) allocmem (sizeof (coulomb));
-  par->s = s;
-  par->alpha = alpha;
-  par->R = R;
-  par->sg = sg;
-  
-  return par;
-}
 
 real 
 kernel_coulomb (pcreal x, pcreal y, uint xmol, uint ymol, void *data) {
@@ -284,7 +313,7 @@ energy_coulomb (pcavector q, pckernelmatrix kc, pspatialgeometry sg, ph2matrix V
   clear_avector (y);
   assert (n == q->size);
   
-  C = Q_E * Q_E * 1e10 / (4.0 * M_PI * EPS_0);
+  C = Q_E * Q_E / (4.0 * M_PI * EPS_0);
   initPoints_spatialgeometry (n, kc->x, sg);
   update_h2matrix_kernelmatrix (false, kc, Vc);
   mvm_h2matrix (1.0, false, Vc, q, y);
@@ -295,7 +324,7 @@ energy_coulomb (pcavector q, pckernelmatrix kc, pspatialgeometry sg, ph2matrix V
   return E;
 }
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Coulomb Forces
  *  ---------------------------------------------------------------- */
  
@@ -305,25 +334,29 @@ static void
 sum_gradient_cutoff (uint dim, uint ldim, uint *j, uint *m, pcreal d, int *j0, 
                      bool exclude, split s, split sd, real alpha, real R, pcreal x, 
                      pcreal y, pfield f){
-  uint i;
+  int i;
   uint l;
   real a, b, r2, R2, r, z[ldim];
+  bool exclude_new;
   
   if (dim > 1) {
     dim --;
     for (i=0; i<m[dim]; i++){
       j[dim] = i;
-      if (i != j0[dim]) {
-        exclude = false;
+      if (i == j0[dim]) {
+        exclude_new = exclude;
       }
-      sum_gradient_cutoff (dim, ldim, j, m, d, j0, exclude, s, sd, alpha, R, x, y, f);
+      else {
+        exclude_new = false;
+      }
+      sum_gradient_cutoff (dim, ldim, j, m, d, j0, exclude_new, s, sd, alpha, R, x, y, f);
     }
   }
   else {
     assert (dim == 1);
     R2 = R*R;
     r2 = 0.0;
-    for (i=0; i<ldim; i++){
+    for (i=ldim-1; i>=0; i--){
       z[i] = y[i] + j[i] * d[i] - x[i];
       b = z[i] * z[i];
       r2 += b;
@@ -369,8 +402,8 @@ shortrangeGradient_coulomb (pcreal x, pcreal y, bool exclude, pcoulomb par, pfie
   // Determine all periodic copies of y within the given radius around x.
   for (i=0; i<dim; i++) {
     d[i] = sg->bmax[i] - sg->bmin[i];
-    jmin = ceil ((y[i] - x[i] - R) / d[i]);
-    jmax = floor ((y[i] - x[i] + R) / d[i]);
+    jmin = ceil ((x[i] - y[i] - R) / d[i]);
+    jmax = floor ((x[i] - y[i] + R) / d[i]);
     m[i] = (jmax < jmin ? 0 : jmax-jmin+1);
     z[i] = y[i] + jmin * d[i];
     j[i] = 0;
@@ -385,19 +418,6 @@ shortrangeGradient_coulomb (pcreal x, pcreal y, bool exclude, pcoulomb par, pfie
   freemem (d);
   freemem (z);
   freemem (j0);
-}
-
-pcoulomb
-setparametersGradient_coulomb (split s, split sd, real alpha, real R, 
-                               pcspatialgeometry sg) {
-  pcoulomb par = (pcoulomb) allocmem (sizeof (coulomb));
-  par->s = s;
-  par->sd = sd;
-  par->alpha = alpha;
-  par->R = R;
-  par->sg = sg;
-  
-  return par;
 }
 
 void 
@@ -421,7 +441,7 @@ fullForce_coulomb (pcavector q, pckernelmatrix kc, pspatialgeometry sg,
   uint i, j, off;
   real C;
   
-  C = Q_E * Q_E * 1e10 / (4.0 * M_PI * EPS_0);
+  C = Q_E * Q_E / (4.0 * M_PI * EPS_0);
   
   assert (q->size == points);
   assert (f->size == points * dim);

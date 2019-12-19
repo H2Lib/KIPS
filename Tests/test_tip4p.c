@@ -9,9 +9,9 @@
 
 int 
 main (int argc, char **argv) {
-  preal bmin, bmax, E_ref, *xn, *xc, r, com;
+  preal bmin, bmax, E_ref;//, *xn, *xc, r, com;
   uint dim, i, m, maxdepth, n;
-  real eta, maxdiam, R, E, sig, eps, alpha, emax;
+  real eta, mindiam, R, E, sig, eps, alpha, emax;
   pspatialgeometry sg;
   pspatialcluster sroot;
   pblock broot;
@@ -24,13 +24,13 @@ main (int argc, char **argv) {
   ptip4p t;
   char *file;
   pavector fc, flj;
-  pquaternion q = new_quaternion ();
+  //pquaternion q = new_quaternion ();
   
   init_kips (&argc, &argv);
   
   dim = 3;
   maxdepth = 0;
-  maxdiam = 1.6;
+  mindiam = RHH_TIP4P;
   alpha = 0.0;
   m = 3;
   eta = 1.0;
@@ -38,7 +38,7 @@ main (int argc, char **argv) {
   eps = EPS_TIP4P;
   s = &split_cutoff;
   sd = &derivative_cutoff;
-  R = 20.0;
+  R = 20.0e-10;
   file = (char *) allocmem (sizeof (char) * 100);
   bmin = allocreal (dim);
   bmax = allocreal (dim);
@@ -66,14 +66,14 @@ main (int argc, char **argv) {
   
   printf ("Setting up bounding box and cluster and block trees\n");
   for (i=0; i<dim; i++) {
-    bmin[i] = -20.0;
-    bmax[i] = 20.0;
+    bmin[i] = -20.0e-10;
+    bmax[i] = 20.0e-10;
   }
   
   sg = new_spatialgeometry (dim, bmin, bmax);
-  sroot = init_spatialgeometry (maxdepth, maxdiam, sg);
-  c = setparametersGradient_coulomb (s, sd, alpha, R, sg);
-  lj = setparameters_lj (R, sig, eps, sg);
+  sroot = init_spatialgeometry (maxdepth, mindiam, sg);
+  c = setParametersGradient_coulomb (s, sd, alpha, R, sg);
+  lj = setParameters_lj (R, sig, eps, sg);
   kc = new_kernelmatrix (dim, m);
   klj = new_kernelmatrix (dim, m);
   kc->g = &kernel_coulomb;
@@ -105,11 +105,11 @@ main (int argc, char **argv) {
   fill_h2matrix_kernelmatrix (false, klj, Vlj);
   fill_h2matrix_kernelmatrix (true, kc, Fc);
   fill_h2matrix_kernelmatrix (true, klj, Flj);
-  /*
+  
   printf ("Calculating potential energies of water clusters\n");
   for (i=2; i<=21; i++) {
     printf ("%d molecules\n", i); 
-    sprintf (file, "/home/jol/Dokumente/KIPS/trunk/Tests/TIP4P-%d.xyz", i);
+    sprintf (file, "./Tests/TIP4P-%d.xyz", i);
     t = inputfile_tip4p (file);
     E = N_A * energy_tip4p (sg, kc, klj, Vc, Vlj, t);
     printf ("E = %16.14e J/mol\n", E);
@@ -124,7 +124,7 @@ main (int argc, char **argv) {
   
   for (i=2; i<=21; i++) {
     printf ("%d molecules\n", i); 
-    sprintf (file, "/home/jol/Dokumente/KIPS/trunk/Tests/TIP4P-%d.xyz", i);
+    sprintf (file, "./Tests/TIP4P-%d.xyz", i);
     t = inputfile_tip4p (file);
     n = t->n;
     fc = new_avector (3 * n * 3);
@@ -149,7 +149,7 @@ main (int argc, char **argv) {
   printf ("-------------------------------------------------------\n");
   printf ("Optimization via gradient method for two molecules\n");
   
-  sprintf (file, "/home/jol/Dokumente/KIPS/trunk/Tests/TIP4P-2b.xyz");
+  sprintf (file, "./Tests/TIP4P-2b.xyz");
   t = inputfile_tip4p (file);
   n = t->n;
   fc = new_avector (3 * n * 3);
@@ -173,7 +173,7 @@ main (int argc, char **argv) {
   printf ("\n");
   printf ("Applying 100 steps of gradient descent method\n");
   for (i=0; i<100; i++) {
-    E = N_A * gradientDescent_tip4p (sg, kc, klj, Vc, Fc, Vlj, Flj, 1.0e20, 0.5, 100, t);
+    E = N_A * gradientDescent_tip4p (sg, kc, klj, Vc, Fc, Vlj, Flj, 1.0, 0.5, 100, t);
   }
   
 
@@ -195,7 +195,8 @@ main (int argc, char **argv) {
   del_avector (fc);
   del_avector (flj);
   del_tip4p (t);
-  */
+  
+  /*
   printf ("-------------------------------------------------------\n");
   printf ("Optimizing orientation\n");
   
@@ -273,6 +274,8 @@ main (int argc, char **argv) {
   del_avector (flj);
   del_tip4p (t);
   
+  */
+  
   printf ("-------------------------------------------------------\n");
   printf ("Cleaning up\n");
   del_spatialgeometry (sg);
@@ -282,8 +285,8 @@ main (int argc, char **argv) {
   del_clusterbasis (cblj);
   del_clusterbasis (rbc);
   del_clusterbasis (rblj);
-  freemem (c);
-  freemem (lj);
+  delParameters_coulomb (c);
+  delParameters_lj (lj);
   del_kernelmatrix (kc);
   del_kernelmatrix (klj);
   del_h2matrix (Vc);
@@ -292,7 +295,7 @@ main (int argc, char **argv) {
   del_h2matrix (Flj);
   freemem (file);
   freemem (E_ref);
-  del_quaternion (q);
+  //del_quaternion (q);
   
   return EXIT_SUCCESS;
 }

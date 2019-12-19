@@ -1,7 +1,7 @@
-/* ------------------------------------------------------------
- * This is the file "rigid.h" of the KIPS package.
- * All rights reserved, Jonas Lorenzen 2019
- * ------------------------------------------------------------ */
+/** ------------------------------------------------------------
+ *    This is the file "rigid.h" of the KIPS package.
+ *    All rights reserved, Jonas Lorenzen 2019
+ *  ------------------------------------------------------------ */
 
 /** @file rigid.h
  *  @author Jonas Lorenzen
@@ -11,8 +11,8 @@
 #define RIGID_H
 
 /** @defgroup rigid rigid
- *  @brief Solution of the Newton-Euler equations of motion of rigid bodies
- *        in three-dimensional space.
+ *  @brief Methods for solution of the Newton-Euler equations of motion of 
+ *        rigid bodies in three-dimensional space.
  *  @{ */
 
 #include "basic.h"
@@ -67,16 +67,16 @@ struct _molecule {
   pquaternion qa;
 };
 
-/** @brief Representation of a rigid molecule. */
+/** @brief Type definition of a rigid molecule. */
 typedef struct _molecule molecule;
 
 /** @brief Pointer to a @ref molecule object. */
 typedef molecule *pmolecule;
 
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Constructors and destructors
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 /** @brief Create a new empty @ref molecule object.
  *
@@ -86,7 +86,7 @@ typedef molecule *pmolecule;
  *
  *  @param n Number of atoms.
  *
- *  @returns Pointer to new molecule object. */
+ *  @returns Pointer to new @ref molecule object. */
 HEADER_PREFIX pmolecule
 new_molecule (uint n);
 
@@ -97,9 +97,9 @@ HEADER_PREFIX void
 del_molecule (pmolecule mol);
 
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Reference orientation
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 /** @brief Compute reference orientation of a rigid molecule.
  *
@@ -131,9 +131,9 @@ HEADER_PREFIX void
 adjust_molecule (pcquaternion q, pmolecule mol);
 
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Time-stepping methods
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 /** @brief Compute the current angular velocity vector from the current 
  *        quaternion and the quaternion velocity.
@@ -148,5 +148,7 @@ angularVelocity_molecule (pmolecule mol);
  *  @param mol Underlying molecule. */
 HEADER_PREFIX void
 quaternionAcceleration_molecule (pmolecule mol);
+
+/** @} */
 
 #endif

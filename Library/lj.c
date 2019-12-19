@@ -2,12 +2,12 @@
 #include <math.h>
 
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Parameters
  *  ---------------------------------------------------------------- */
 
 plj
-setparameters_lj (real R, real sig, real eps, pcspatialgeometry sg) {
+setParameters_lj (real R, real sig, real eps, pcspatialgeometry sg) {
   real sig2, sig6, sig12, R2, R6, R12;
 
   plj par = (plj) allocmem (sizeof (lj));
@@ -31,8 +31,8 @@ setparameters_lj (real R, real sig, real eps, pcspatialgeometry sg) {
 }
 
 plj
-setparametersUnshifted_lj (real R, real sig, real eps, pcspatialgeometry sg) {
-  plj par = setparameters_lj (R, sig, eps, sg);
+setParametersUnshifted_lj (real R, real sig, real eps, pcspatialgeometry sg) {
+  plj par = setParameters_lj (R, sig, eps, sg);
   
   // Do not use shift.
   par->a = 0.0;
@@ -41,8 +41,12 @@ setparametersUnshifted_lj (real R, real sig, real eps, pcspatialgeometry sg) {
   return par;
 }
 
+void 
+delParameters_lj (plj lj) {
+  freemem (lj);
+}
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Lennard-Jones potential
  *  ---------------------------------------------------------------- */
 
@@ -52,18 +56,22 @@ static real
 sum_potential_cutoff (uint dim, uint ldim, uint *j, uint *m, pcreal d, 
                       int *j0, bool exclude, real R, real sig12, real sig6, 
                       real alpha, real beta, pcreal x, pcreal y){
-  uint i;
+  int i;
   real a, b, r2, R2, V, r6, r12;
+  bool exclude_new;
   V = 0.0;
   
   if (dim > 1) {
     dim --;
     for (i=0; i<m[dim]; i++){
       j[dim] = i;
-      if (i != j0[dim]) {
-        exclude = false;
+      if (i == j0[dim]) {
+        exclude_new = exclude;
       }
-      V += sum_potential_cutoff (dim, ldim, j, m, d, j0, exclude, R, sig12, 
+      else {
+        exclude_new = false;
+      }
+      V += sum_potential_cutoff (dim, ldim, j, m, d, j0, exclude_new, R, sig12, 
                                  sig6, alpha, beta, x, y);
     }
   }
@@ -71,7 +79,7 @@ sum_potential_cutoff (uint dim, uint ldim, uint *j, uint *m, pcreal d,
     assert (dim == 1);
     R2 = R * R;
     r2 = 0.0;
-    for (i=0; i<ldim; i++){
+    for (i=ldim-1; i>=0; i--){
       a = y[i] + j[i] * d[i] - x[i];
       b = a * a;
       r2 += b;
@@ -111,8 +119,8 @@ shortrangePotential_lj (pcreal x, pcreal y, bool exclude, plj par) {
   // Determine all periodic copies of x within the given radius around y.
   for (i=0; i<dim; i++) {
     d[i] = sg->bmax[i] - sg->bmin[i];
-    jmin = ceil ((y[i] - x[i] - R) / d[i]);
-    jmax = floor ((y[i] - x[i] + R) / d[i]);
+    jmin = ceil ((x[i] - y[i] - R) / d[i]);
+    jmax = floor ((x[i] - y[i] + R) / d[i]);
     m[i] = (jmax < jmin ? 0 : jmax-jmin+1);
     z[i] = y[i] + jmin * d[i];
     j[i] = 0;
@@ -172,7 +180,7 @@ energy_lj (pckernelmatrix klj, pspatialgeometry sg, ph2matrix Vlj) {
 }
 
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Lennard-Jones forces
  *  ---------------------------------------------------------------- */
 
@@ -182,18 +190,22 @@ static void
 sum_gradient_cutoff (uint dim, uint ldim, uint *j, uint *m, pcreal d, int *j0, 
                      bool exclude, real R, real sig12, real sig6, real alpha, 
                      pcreal x, pcreal y, pfield f){
-  uint i;
+  int i;
   uint l;
   real a, b, r2, R2, r4, r8, r16, z[ldim];
+  bool exclude_new;
   
   if (dim > 1) {
     dim --;
     for (i=0; i<m[dim]; i++){
       j[dim] = i;
-      if (i != j0[dim]) {
-        exclude = false;
+      if (i == j0[dim]) {
+        exclude_new = exclude;
       }
-      sum_gradient_cutoff (dim, ldim, j, m, d, j0, exclude, R, sig12, sig6, alpha, 
+      else {
+        exclude_new = false;
+      }
+      sum_gradient_cutoff (dim, ldim, j, m, d, j0, exclude_new, R, sig12, sig6, alpha, 
                            x, y, f);
     }
   }
@@ -201,7 +213,7 @@ sum_gradient_cutoff (uint dim, uint ldim, uint *j, uint *m, pcreal d, int *j0,
     assert (dim == 1);
     R2 = R*R;
     r2 = 0.0;
-    for (i=0; i<ldim; i++){
+    for (i=ldim-1; i>=0; i--){
       z[i] = y[i] + j[i] * d[i] - x[i];
       b = z[i] * z[i];
       r2 += b;
@@ -246,8 +258,8 @@ shortrangeGradient_lj (pcreal x, pcreal y, bool exclude, plj par, pfield f) {
   // Determine all periodic copies of x within the given radius around y.
   for (i=0; i<dim; i++) {
     d[i] = sg->bmax[i] - sg->bmin[i];
-    jmin = ceil ((y[i] - x[i] - R) / d[i]);
-    jmax = floor ((y[i] - x[i] + R) / d[i]);
+    jmin = ceil ((x[i] - y[i] - R) / d[i]);
+    jmax = floor ((x[i] - y[i] + R) / d[i]);
     m[i] = (jmax < jmin ? 0 : jmax-jmin+1);
     z[i] = y[i] + jmin * d[i];
     j[i] = 0;

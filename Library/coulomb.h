@@ -1,7 +1,7 @@
-/* ------------------------------------------------------------
- * This is the file "coulomb.h" of the KIPS package.
- * All rights reserved, Jonas Lorenzen 2018
- * ------------------------------------------------------------ */
+/** ------------------------------------------------------------
+ *    This is the file "coulomb.h" of the KIPS package.
+ *    All rights reserved, Jonas Lorenzen 2018
+ *  ------------------------------------------------------------ */
 
 /** @file coulomb.h
  *  @author Jonas Lorenzen
@@ -12,6 +12,8 @@
 
 /** @defgroup coulomb coulomb
  *  @brief Evaluation of the Coulomb potential (and forces) in a periodic grid.
+ *
+ *  @attention All functions in this module enforce the use of SI units!
  *  @{ */
 
 #include "basic.h"
@@ -41,14 +43,14 @@ struct _coulomb {
   pcspatialgeometry sg;
 };
 
-/** @brief Representation of parameters. */
+/** @brief Type definition of coulomb parameters. */
 typedef struct _coulomb coulomb;
 
-/** @brief Pointer to a parameter object. */
+/** @brief Pointer to a @ref coulomb object. */
 typedef coulomb * pcoulomb;
 
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Range splitting functions for cutoff schemes
  *  ---------------------------------------------------------------- */
 
@@ -192,7 +194,7 @@ HEADER_PREFIX real
 split_SP3 (real alpha, real R, real r);
 
 /** @brief Derivative of the range splitting function for the 
- *        Shifted Potential of third order (SP3). 
+ *        Shifted Potential of third order (SP3). All functions in this module enforce the use of SI units!
  *
  *  @param alpha Damping parameter (void).
  *  @param real R Cutoff distance.
@@ -203,7 +205,7 @@ HEADER_PREFIX real
 derivative_SP3 (real alpha, real R, real r);
 
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Geometric data
  *  ---------------------------------------------------------------- */
 
@@ -211,17 +213,15 @@ derivative_SP3 (real alpha, real R, real r);
  *  ensure that intramolecular interactions are ignored in the calculation 
  *  of Coulomb forces.
  *
- *  @param eta Admissibility parameter for the corresponding @ref h2matrix 
- *        object.
+ *  @param eta Admissibility parameter for the corresponding @f$\mathcal{H}^2@f$-matrix.
  *  @param rmol Length of the largest molecule considered in the simulation.
  *
  *  @returns Minimal diameter needed for construction of a spatial cluster tree. */
 HEADER_PREFIX real
 mindiam_coulomb (real eta, real rmol);
 
-
-/*  ----------------------------------------------------------------
- *    Coulomb Potential
+/** ----------------------------------------------------------------
+ *    Parameters
  *  ---------------------------------------------------------------- */
 
 /** @brief Collection of necessary parameters for coulomb kernel function.
@@ -231,9 +231,32 @@ mindiam_coulomb (real eta, real rmol);
  *  @param R Cutoff radius.
  *  @param sg Information about the unit cell.
  *
- *  @returns Parameters for coulomb kernel function. */
+ *  @returns Pointer to new @ref coulomb object with the given parameters. */
 HEADER_PREFIX pcoulomb
-setparametersPotential_coulomb (split s, real alpha, real R, pcspatialgeometry sg);
+setParametersPotential_coulomb (split s, real alpha, real R, pcspatialgeometry sg);
+
+/** @brief Collection of necessary parameters for coulomb gradient function.
+ * 
+ *  @param s Range splitting function.
+ *  @param sd Derivative of the splitting function.
+ *  @param alpha Damping parameter for splitting function.
+ *  @param R Cutoff radius.
+ *  @param sg Information about the unit cell.
+ * 
+ *  @returns Pointer to new @ref coulomb object with the given parameters. */
+HEADER_PREFIX pcoulomb
+setParametersGradient_coulomb (split s, split sd, real alpha, real R, 
+                               pcspatialgeometry sg);
+
+/** @brief Delete a set of coulomb parameters.
+ *
+ *  @param c The given @ref coulomb object to be deleted. */
+HEADER_PREFIX void
+delParameters_coulomb (pcoulomb c);
+
+/** ----------------------------------------------------------------
+ *    Coulomb Potential
+ *  ---------------------------------------------------------------- */
 
 /** @brief Kernel function for the short-range part of the Coulombic pair potential.
  *
@@ -243,11 +266,11 @@ setparametersPotential_coulomb (split s, real alpha, real R, pcspatialgeometry s
  *
  *  @param x Evaluation point.
  *  @param y Evaluation point.
- *  @param xmol Molecule number of x.
- *  @param ymol Molecule number of y.
+ *  @param xmol Molecule number of @p x.
+ *  @param ymol Molecule number of @p y.
  *  @param data Parameters of the Coulomb potential.
  *
- *  @returns Kernel function for Coulombic pair potential, evaluated in x and y. */
+ *  @returns Kernel function for Coulombic pair potential, evaluated in @p x and @p y. */
 HEADER_PREFIX real 
 kernel_coulomb (pcreal x, pcreal y, uint xmol, uint ymol, void *data);
 
@@ -270,34 +293,20 @@ selfterm_coulomb (split sp, real alpha, pcavector q, real R);
  *  @remark The input potential matrix is supposed to have the correct 
  *          structure, but leaf and nearfield matrices will be updated 
  *          within this function.
- *          Assumes all distances to be measured in Angström.
  *
  *  @param q (Dimensionless) Charge vector.
  *  @param kc Kernel matrix of the Coulomb potential.
  *  @param sg Geometric information.
- *  @param Vc Potential matrix of @ref h2matrix type.
+ *  @param Vc Potential matrix.
  *
- *  @returns Value of the potential energy in units of Joule/mol. */
+ *  @returns Value of the potential energy. */
 HEADER_PREFIX real
 energy_coulomb (pcavector q, pckernelmatrix kc, pspatialgeometry sg, ph2matrix Vc);
 
 
-/*  ----------------------------------------------------------------
+/** ----------------------------------------------------------------
  *    Coulomb Forces
  *  ---------------------------------------------------------------- */
-
-/** @brief Collection of necessary parameters for coulomb gradient function.
- * 
- *  @param s Range splitting function.
- *  @param sd Derivative of the splitting function.
- *  @param alpha Damping parameter for splitting function.
- *  @param R Cutoff radius.
- *  @param sg Information about the unit cell.
- * 
- *  @returns Parameters for coulomb gradient function. */
-HEADER_PREFIX pcoulomb
-setparametersGradient_coulomb (split s, split sd, real alpha, real R, 
-                               pcspatialgeometry sg);
 
 /** @brief Gradient function for the short-range part of the Coulombic pair potential.
  *
@@ -307,8 +316,8 @@ setparametersGradient_coulomb (split s, split sd, real alpha, real R,
  *
  *  @param x Point charge location.
  *  @param y Point that exerts force.
- *  @param xmol Molecule number of x.
- *  @param ymol Molecule number of y.
+ *  @param xmol Molecule number of @p x.
+ *  @param ymol Molecule number of @p y.
  *  @param data Parameters of the Coulomb potential.
  *  @param f Gradient of the Coulombic pair potential, to be set by this function. */
 HEADER_PREFIX void 
@@ -323,12 +332,11 @@ gradient_coulomb (pcreal x, pcreal y, uint xmol, uint ymol, void *data, pfield f
  *  @remark The input gradient matrix is supposed to have the correct 
  *          structure, but leaf and nearfield matrices will be updated 
  *          within this function.
- *          Assumes all distances to be measured in Angström.
  *
  *  @param q Vector of charges.
  *  @param kc Kernel matrix for the Coulomb potential.
  *  @param sg Geometric information.
- *  @param Fc Gradient matrix of @ref h2matrix type. 
+ *  @param Fc Gradient matrix. 
  *  @param f Pointer to force vector. */
 HEADER_PREFIX void
 fullForce_coulomb (pcavector q, pckernelmatrix kc, pspatialgeometry sg, 

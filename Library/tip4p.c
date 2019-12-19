@@ -1,9 +1,9 @@
 #include "tip4p.h"
 #include <stdio.h>
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Constructors and destructors
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 ptip4p 
 new_tip4p (uint n) {
@@ -55,9 +55,9 @@ del_tip4p (ptip4p t) {
   freemem (t);
 }
  
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    In-/Output
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 void 
 calc_virtual_charge (pcreal h1, pcreal h2, pcreal o, preal m) {
@@ -116,9 +116,9 @@ inputfile_tip4p (const char *file) {
       printf ("Error: Expected oxygen atom in line %u\n", i+2);
       exit (0);
     }
-    xn[i][0] = xo;
-    xn[i][1] = yo;
-    xn[i][2] = zo;
+    xn[i][0] = 1e-10 * xo;
+    xn[i][1] = 1e-10 * yo;
+    xn[i][2] = 1e-10 * zo;
     xnmol[i] = i+1;
     
     #ifdef USE_FLOAT
@@ -134,9 +134,9 @@ inputfile_tip4p (const char *file) {
       printf ("Error: Expected hydrogen atom in line %u\n", i+3);
       exit (0);
     }
-    xc[j+1][0] = xh1;
-    xc[j+1][1] = yh1;
-    xc[j+1][2] = zh1;
+    xc[j+1][0] = 1e-10 * xh1;
+    xc[j+1][1] = 1e-10 * yh1;
+    xc[j+1][2] = 1e-10 * zh1;
     xcmol[j+1] = i+1;
     
     #ifdef USE_FLOAT
@@ -152,9 +152,9 @@ inputfile_tip4p (const char *file) {
       printf ("Error: Expected hydrogen atom in line %u\n", i+4);
       exit (0);
     }
-    xc[j+2][0] = xh2;
-    xc[j+2][1] = yh2;
-    xc[j+2][2] = zh2;
+    xc[j+2][0] = 1e-10 * xh2;
+    xc[j+2][1] = 1e-10 * yh2;
+    xc[j+2][2] = 1e-10 * zh2;
     xcmol[j+2] = i+1;
     
     // Calculate virtual charge location.
@@ -163,23 +163,23 @@ inputfile_tip4p (const char *file) {
     
     // Calculate center of mass.
     com = mol[i]->com->v;
-    com[0] = (M_H * (xh1 + xh2) + M_O * xo) / M;
-    com[1] = (M_H * (yh1 + yh2) + M_O * yo) / M;
-    com[2] = (M_H * (zh1 + zh2) + M_O * zo) / M;
+    com[0] = (M_H * (xc[j+1][0] + xc[j+2][0]) + M_O * xn[i][0]) / M;
+    com[1] = (M_H * (xc[j+1][1] + xc[j+2][1]) + M_O * xn[i][1]) / M;
+    com[2] = (M_H * (xc[j+1][2] + xc[j+2][2]) + M_O * xn[i][2]) / M;
     
     // Calculate relative atom positions.
     r = mol[i]->r[0]->v;
-    r[0] = xo - com[0];
-    r[1] = yo - com[1];
-    r[2] = zo - com[2];
+    r[0] = xn[i][0] - com[0];
+    r[1] = xn[i][1] - com[1];
+    r[2] = xn[i][2] - com[2];
     r = mol[i]->r[1]->v;
-    r[0] = xh1 - com[0];
-    r[1] = yh1 - com[1];
-    r[2] = zh1 - com[2];
+    r[0] = xc[j+1][0] - com[0];
+    r[1] = xc[j+1][1] - com[1];
+    r[2] = xc[j+1][2] - com[2];
     r = mol[i]->r[2]->v;
-    r[0] = xh2 - com[0];
-    r[1] = yh2 - com[1];
-    r[2] = zh2 - com[2];
+    r[0] = xc[j+2][0] - com[0];
+    r[1] = xc[j+2][1] - com[1];
+    r[2] = xc[j+2][2] - com[2];
   }
   
   fclose (stream);
@@ -188,9 +188,9 @@ inputfile_tip4p (const char *file) {
 }
 
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Energy and force calculation
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 real
 energy_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
@@ -242,14 +242,14 @@ calcForce_tip4p (pavector fc, pavector flj, ptip4p t) {
   return emax;
 }
 
-// z <- z + alpha * v x w
+// z <- z + v x w
 static void 
-cross (real *norm2, real alpha, pcreal v, pcreal w, preal z) {
+cross (real *norm2, pcreal v, pcreal w, preal z) {
   real a, b, c;
   
-  a = alpha * (v[1] * w[2] - v[2] * w[1]);
-  b = alpha * (v[2] * w[0] - v[0] * w[2]);
-  c = alpha * (v[0] * w[1] - v[1] * w[0]);
+  a = v[1] * w[2] - v[2] * w[1];
+  b = v[2] * w[0] - v[0] * w[2];
+  c = v[0] * w[1] - v[1] * w[0];
   
   *norm2 += a * a + b * b + c * c;
   
@@ -279,19 +279,19 @@ calcTorque_tip4p (pavector fc, pavector flj, ptip4p t) {
     clear_avector (tau);
     
     r = mol->r[0]->v;
-    cross (&e, 1e-10, r, flj->v + k, tau->v);
+    cross (&e, r, flj->v + k, tau->v);
     
     // Relative coordinates of the virtual charged site
     rm[0] = xc[k][0] - com[0];
     rm[1] = xc[k][1] - com[1];
     rm[2] = xc[k][2] - com[2];
-    cross (&e, 1e-10, rm, fc->v + 3 * k, tau->v);
+    cross (&e, rm, fc->v + 3 * k, tau->v);
     
     r = mol->r[1]->v;
-    cross (&e, 1e-10, r, fc->v + 3 * (k + 1), tau->v);
+    cross (&e, r, fc->v + 3 * (k + 1), tau->v);
     
     r = mol->r[2]->v;
-    cross (&e, 1e-10, r, fc->v + 3 * (k + 2), tau->v);
+    cross (&e, r, fc->v + 3 * (k + 2), tau->v);
     
     e = nrm2 (3, tau->v, 1) / REAL_SQRT (e);
     emax = (e > emax) ? e : emax;
@@ -403,6 +403,7 @@ gradientDescent_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj,
   return E;
 }
 
+/*
 static void
 quaternion_velocity (pcquaternion q, pcreal w, pmolecule mol) {
   pquaternion qv = mol->qv;
@@ -468,7 +469,7 @@ gradientDescentRotation_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmat
     p[i] = new_quaternion ();
   }
   
-  // Perform line search in direction of the negative gradient
+  // Perform line search in direction given by the torque
   while (E0 - E < lambda * b && k < m) {
     // Reset quaternions
     for (i=0; i<n; i++) {
@@ -483,13 +484,9 @@ gradientDescentRotation_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmat
       j = 3 * i;
       tau = mol[i]->t->v;
       com = mol[i]->com->v;
-      //printf ("orgininal quaterninon: (%lf %lf %lf %lf)\n", p[i][0], p[i][1], p[i][2], p[i][3]);
       quaternion_velocity (p[i], tau, mol[i]);
-      //printf ("quaternion velocity: (%e %e %e %e)\n", mol[i]->qv[0], mol[i]->qv[1], mol[i]->qv[2], mol[i]->qv[3]);
       axpy (4, lambda, mol[i]->qv, 1, p[i], 1);
-      //printf ("new quaternion: (%lf %lf %lf %lf)\n", p[i][0], p[i][1], p[i][2], p[i][3]);
       normalize_quaternion (p[i]);
-      //printf ("unified new quaternion: (%lf %lf %lf %lf)\n", p[i][0], p[i][1], p[i][2], p[i][3]);
       adjust_molecule (p[i], mol[i]);
       r = mol[i]->r[0]->v;
       xn_new[i][0] = com[0] + r[0];
@@ -510,15 +507,11 @@ gradientDescentRotation_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmat
     update_kernelmatrix (3 * n, xc_new, xcmol, kc);
     update_kernelmatrix (n, xn_new, xnmol, klj);
     E = energy_coulomb (q, kc, sg, Vc) + energy_lj (klj, sg, Vlj);
-    /*fullForce_coulomb (q, kc, sg, Fc, fc);
-  
-    fullForce_lj (klj, sg, Flj, flj);
-    et = calcTorque_tip4p (fc, flj, t);
-    printf ("e_torque = %e\n", et);*/
+    
     lambda *= nu;
     k++;
   }
-  //printf ("%u line search steps\n", k);
+  
   // Check whether line search was successful and in case update coordinates
   if (E0 - E >= lambda * b) {
     freemem (xc[0]);
@@ -559,10 +552,11 @@ gradientDescentRotation_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmat
   return E;
 }
 
+*/
 
-/* ----------------------------------------------------------------------
+/** ----------------------------------------------------------------------
  *    Rotational motion
- * ---------------------------------------------------------------------- */
+ *  ---------------------------------------------------------------------- */
 
 void
 inertia_tip4p (ptip4p t) {
@@ -587,20 +581,20 @@ inertia_tip4p (ptip4p t) {
     r21 = r[2]->v[1];
     r22 = r[2]->v[2];
     // Diagonal entries
-    I[0] = 1e-20 * (M_O * (r01 * r01 + r02 * r02) 
-                    + M_H * (r11 * r11 + r12 * r12 + r21 * r21 + r22 * r22));
-    I[4] = 1e-20 * (M_O * (r00 * r00 + r02 * r02) 
-                    + M_H * (r10 * r10 + r12 * r12 + r20 * r20 + r22 * r22));
-    I[8] = 1e-20 * (M_O * (r00 * r00 + r01 * r01) 
-                    + M_H * (r10 * r10 + r11 * r11 + r20 * r20 + r21 * r21));
+    I[0] = M_O * (r01 * r01 + r02 * r02) 
+                    + M_H * (r11 * r11 + r12 * r12 + r21 * r21 + r22 * r22);
+    I[4] = M_O * (r00 * r00 + r02 * r02) 
+                    + M_H * (r10 * r10 + r12 * r12 + r20 * r20 + r22 * r22);
+    I[8] = M_O * (r00 * r00 + r01 * r01) 
+                    + M_H * (r10 * r10 + r11 * r11 + r20 * r20 + r21 * r21);
                   
     // Off-diagonal entries
-    I[1] = I[3] = 1e-20 * (- M_O * r00 * r01 - M_H * (r10 * r11 + r20 * r21));
-    I[2] = I[6] = 1e-20 * (- M_O * r00 * r02 - M_H * (r10 * r12 + r20 * r22));
-    I[5] = I[7] = 1e-20 * (- M_O * r01 * r02 - M_H * (r11 * r12 + r21 * r22));
+    I[1] = I[3] = - M_O * r00 * r01 - M_H * (r10 * r11 + r20 * r21);
+    I[2] = I[6] = - M_O * r00 * r02 - M_H * (r10 * r12 + r20 * r22);
+    I[5] = I[7] = - M_O * r01 * r02 - M_H * (r11 * r12 + r21 * r22);
   }
 }
 
-/* ----------------------------------------------------------------------
+/** ----------------------------------------------------------------------
  *    Translational motion
- * ---------------------------------------------------------------------- */
+ *  ---------------------------------------------------------------------- */

@@ -1,7 +1,7 @@
-/* ------------------------------------------------------------
- * This is the file "tip4p.h" of the KIPS package.
- * All rights reserved, Jonas Lorenzen 2019
- * ------------------------------------------------------------ */
+/** ------------------------------------------------------------
+ *    This is the file "tip4p.h" of the KIPS package.
+ *    All rights reserved, Jonas Lorenzen 2019
+ *  ------------------------------------------------------------ */
 
 /** @file tip4p.h
  *  @author Jonas Lorenzen
@@ -12,6 +12,10 @@
 
 /** @defgroup tip4p tip4p
  *  @brief Energy and force calculation for the TIP4P model of water.
+ *
+ *  @attention (Almost) All functions in this module enforce the use of SI units! 
+ *            The only exception is the input file for the @ref inputfile_tip4p 
+ *            function.
  *  @{ */
 
 #include "basic.h"
@@ -45,45 +49,42 @@ struct _tip4p {
   uint *xnmol;
 };
 
-/** @brief Representation of a system of water molecules. */
+/** @brief Type definition of a system of water molecules. */
 typedef struct _tip4p tip4p;
 
 /** @brief Pointer to a @ref tip4p object. */
 typedef tip4p *ptip4p;
 
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Global parameters of the TIP4P model
- * --------------------------------------------------------------------- */
-
-/** Lengths are measured in Angström. 
- *  Charges are in terms of the elementary charge.*/
+ *  --------------------------------------------------------------------- */
 
 // Zero of the Lennard-Jones potential.
-#define SIG_TIP4P 3.154;
+#define SIG_TIP4P 3.154e-10;
 
-// Depth of the potential well in Joule.
+// Depth of the potential well of the Lennard-Jones potential.
 #define EPS_TIP4P 1.0769e-21;
 
-// Charge of hydrogen atoms.
+// Charge of hydrogen atoms (dimensionless).
 #define QH_TIP4P 0.52;
 
-// Virtual charges.
+// Virtual charges (dimensionless).
 #define QM_TIP4P -1.04;
 
 // Distance between hydrogen and oxygen atoms.
-#define ROH_TIP4P 0.9572;
+#define ROH_TIP4P 9.572e-11;
 
 // Distance between oxygen atoms and virtual charges.
-#define ROM_TIP4P 0.15;
+#define ROM_TIP4P 1.5e-11;
 
 /** Distance between hydrogen atoms, corresponding to an H-O-H angle 
  *  of 104,52°. */
-#define RHH_TIP4P 1.5;
+#define RHH_TIP4P 1.5e-10;
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Constructors and destructors
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
  
 /** @brief Create a new empty @ref tip4p object.
  *
@@ -102,16 +103,14 @@ new_tip4p (uint n);
 
 /** @brief Delete a @ref tip4p object.
  *
- *  Releases the storage corresponding to the given tip4p object.
- *
- *  @param t Object to be deleted. */
+ *  @param t System of water molecules to be deleted. */
 HEADER_PREFIX void
 del_tip4p (ptip4p t);
  
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    In-/Output
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 /** @brief Load a system of water molecules from a file. 
  *
@@ -119,23 +118,22 @@ del_tip4p (ptip4p t);
  *  adds virtual charges corresponding to the TIP4P model and stores 
  *  the system in a @ref tip4p object.
  *
- *  @remark: Assumes that the atoms are listed in a way such that the oxygen 
+ *  @remark Assumes that the atoms are listed in a way such that the oxygen 
  *  atom of a water molecule is followed by the two corresponding hydrogen 
  *  atoms.
- *  Furthermore assumes all distances to be measured in Angström.
+ *  
+ *  @attention Assumes the coordinates in the input file to be given in 
+ *            units of Angström. Those will then be scaled appropriately.
  *
  *  @param file Name of the input file.
  *
- *  @returns Pointer to a new tip4p object corresponding to the input file. */
+ *  @returns Pointer to a new @ref tip4p object. */
 HEADER_PREFIX ptip4p 
 inputfile_tip4p (const char *file);
 
-HEADER_PREFIX void 
-calc_virtual_charge (pcreal h1, pcreal h2, pcreal o, preal m);
-
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Energy and force calculation
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 /** @brief Calculate the potential energy of the TIP4P system.
  *
@@ -148,24 +146,20 @@ calc_virtual_charge (pcreal h1, pcreal h2, pcreal o, preal m);
  *  This function will then fill the matrices with the suitable values of the 
  *  potentials and calculate the potential energy as a sum over all entries.
  *
- *  @remark All distances are supposed to be measured in Angström.
- *
  *  @param sg Geometric information.
  *  @param kc Coulomb potential.
  *  @param klj Lennard-Jones potential.
- *  @param Vc @f$\mathcal{H}^2@f$-matrix for the Coulomb potential.
- *  @param Vlj @f$\mathcal{H}^2@f$-matrix for the Lennard-Jones potential.
+ *  @param Vc Coulomb potential matrix.
+ *  @param Vlj Lennard-Jones potential matrix.
  *  @param t System of water molecules.
  *
- *  @returns Value of the potential energy of the system in J/mol. */
+ *  @returns Value of the potential energy of the system. */
 HEADER_PREFIX real
 energy_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
                  ph2matrix Vc, ph2matrix Vlj, ptip4p t);
 
 /** @brief Calculate the force vector acting on the center of mass for each 
  *        molecule.
- *
- *  @remark All distances are supposed to be measured in Angström.
  *
  *  @param fc Concatenated vector of all Coulomb forces.
  *  @param flj Concatenated vector of all Lennard-Jones forces.
@@ -176,8 +170,6 @@ calcForce_tip4p (pavector fc, pavector flj, ptip4p t);
 /** @brief Calculate the torque vector acting on the center of mass for each 
  *        molecule.
  *
- *  @remark All distances are supposed to be measured in Angström.
- *
  *  @param fc Concatenated vector of all Coulomb forces.
  *  @param flj Concatenated vector of all Lennard-Jones forces.
  *  @param t System of water molecules. */
@@ -185,9 +177,9 @@ HEADER_PREFIX real
 calcTorque_tip4p (pavector fc, pavector flj, ptip4p t);
 
 
-/* ---------------------------------------------------------------------
+/** ---------------------------------------------------------------------
  *    Optimization
- * --------------------------------------------------------------------- */
+ *  --------------------------------------------------------------------- */
 
 /** @brief Gradient descent method for minimization of the potential energy.
  *
@@ -202,43 +194,40 @@ calcTorque_tip4p (pavector fc, pavector flj, ptip4p t);
  *  @param sg Geometric information.
  *  @param kc Coulomb potential.
  *  @param klj Lennard-Jones potential.
- *  @param Vc @f$\mathcal{H}^2@f$-matrix for the Coulomb potential.
- *  @param Vlj @f$\mathcal{H}^2@f$-matrix for the Lennard-Jones potential.
- *  @param Fc Gradient matrix of the Coulomb potential.
- *  @param Flj Gradient matrix of the Lennard-Jones potential.
+ *  @param Vc Coulomb potential matrix.
+ *  @param Vlj Lennard-Jones potential matrix.
+ *  @param Fc Coulomb gradient matrix.
+ *  @param Flj Lennard-Jones gradient matrix.
  *  @param lambda Initial step size for the line search.
  *  @param nu Factor by which the step size is decreased during the line search.
  *  @param m Maximal number of line search steps.
  *  @param t System of water molecules.
  *
- *  @returns New value of the potential energy of the system in J/mol. */
+ *  @returns New value of the potential energy of the system. */
 HEADER_PREFIX real
 gradientDescent_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
                        ph2matrix Vc, ph2matrix Fc, ph2matrix Vlj, ph2matrix Flj, 
                        real lambda, real nu, uint m, ptip4p t);
 
-HEADER_PREFIX real
-gradientDescentRotation_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
-                              ph2matrix Vc, ph2matrix Fc, ph2matrix Vlj, ph2matrix Flj, 
-                              real lambda, real nu, uint m, ptip4p t);
+//HEADER_PREFIX real
+//gradientDescentRotation_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
+//                              ph2matrix Vc, ph2matrix Fc, ph2matrix Vlj, ph2matrix Flj, 
+//                              real lambda, real nu, uint m, ptip4p t);
 
-/* ----------------------------------------------------------------------
+/** ----------------------------------------------------------------------
  *    Rotational motion
- * ---------------------------------------------------------------------- */
+ *  ---------------------------------------------------------------------- */
 
 /** @brief Construct the inertia matrix for each molecule.
- *
- *  @remark Assumes lengths to be measured in Angström. 
- *          The diagonalization, e. g. via @ref Jacobi_quaternion, is invariant 
- *          to scaling anyway, but the principal moments of inertia might be scaled 
- *          differently in other units.
  *
  *  @param t System of water molecules. */
 HEADER_PREFIX void
 inertia_tip4p (ptip4p t);
 
-/* ----------------------------------------------------------------------
+/** ----------------------------------------------------------------------
  *    Translational motion
- * ---------------------------------------------------------------------- */
+ *  ---------------------------------------------------------------------- */
+
+/** @} */
 
 #endif
