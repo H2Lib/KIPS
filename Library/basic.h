@@ -38,6 +38,27 @@ typedef stopwatch *pstopwatch;
 #define M_PI 3.141592653589793238462643383
 #endif
 
+/** @brief Elementary charge. */
+#define Q_E 1.602176634e-19
+
+/** @brief Vacuum permittivity. */
+#define EPS_0 8.8541878128e-12
+
+/** @brief Boltzmann constant. */
+#define K_B 1.380649e-23
+
+/** @brief Avogadro number. */
+#define N_A 6.02214076e23
+
+/** @brief Atomic mass unit. */
+#define U 1.66053906660e-27
+
+/** @brief Atomic mass of hydrogen. */
+#define M_H 1.008 * U
+
+/** @brief Atomic mass of oxygen. */
+#define M_O 15.999 * U
+
 /** @brief Number of power iteration steps used to approximate the spectral norm. */
 #define NORM_STEPS 20
 

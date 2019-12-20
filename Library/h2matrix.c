@@ -536,23 +536,22 @@ fastaddeval_h2matrix(field alpha, pch2matrix h2, pcavector xt, pavector yt)
     xtoff = cb->k;
     for (j = 0; j < csons; j++) {
       assert(csons == 1 || cb->sons > 0);
-      xt1 =
-	(cb->sons > 0 ?
-	 init_sub_avector(&loc1, (pavector) xt, cb->son[j]->ktree, xtoff) :
-	 init_sub_avector(&loc1, (pavector) xt, cb->ktree, 0));
+      xt1 = (cb->sons > 0 ? 
+             init_sub_avector(&loc1, (pavector) xt, cb->son[j]->ktree, xtoff) :
+             init_sub_avector(&loc1, (pavector) xt, cb->ktree, 0));
 
       ytoff = rb->k;
       for (i = 0; i < rsons; i++) {
-	assert(rsons == 1 || rb->sons > 0);
-	yt1 = (rb->sons > 0 ?
-	       init_sub_avector(&loc2, yt, rb->son[i]->ktree, ytoff) :
-	       init_sub_avector(&loc2, yt, rb->ktree, 0));
+        assert(rsons == 1 || rb->sons > 0);
+        yt1 = (rb->sons > 0 ?
+               init_sub_avector(&loc2, yt, rb->son[i]->ktree, ytoff) :
+               init_sub_avector(&loc2, yt, rb->ktree, 0));
 
-	fastaddeval_h2matrix(alpha, h2->son[i + j * rsons], xt1, yt1);
+        fastaddeval_h2matrix(alpha, h2->son[i + j * rsons], xt1, yt1);
 
-	uninit_avector(yt1);
+        uninit_avector(yt1);
 
-	ytoff += (rb->sons > 0 ? rb->son[i]->ktree : rb->t->nidx);
+        ytoff += (rb->sons > 0 ? rb->son[i]->ktree : rb->t->nidx);
       }
       assert(ytoff == rb->ktree);
 
@@ -621,25 +620,21 @@ fastaddevaltrans_h2matrix(field alpha, pch2matrix h2,
   else if (h2->son) {
     ytoff = cb->k;
     for (j = 0; j < csons; j++) {
-      yt1 =
-	(cb->sons >
-	 0 ? init_sub_avector(&loc2, yt, cb->son[j]->ktree,
-			      ytoff) : init_sub_avector(&loc2, yt, cb->ktree,
-							0));
+      yt1 = (cb->sons > 0 ? 
+             init_sub_avector(&loc2, yt, cb->son[j]->ktree, ytoff) : 
+             init_sub_avector(&loc2, yt, cb->ktree, 0));
 
       xtoff = rb->k;
       for (i = 0; i < rsons; i++) {
-	xt1 = (rb->sons > 0 ?
-	       init_sub_avector(&loc1, (pavector) xt, rb->son[i]->ktree,
-				xtoff) : init_sub_avector(&loc1,
-							  (pavector) xt,
-							  rb->ktree, 0));
+        xt1 = (rb->sons > 0 ?
+               init_sub_avector(&loc1, (pavector) xt, rb->son[i]->ktree, xtoff) : 
+               init_sub_avector(&loc1, (pavector) xt, rb->ktree, 0));
 
-	fastaddevaltrans_h2matrix(alpha, h2->son[i + j * rsons], xt1, yt1);
+        fastaddevaltrans_h2matrix(alpha, h2->son[i + j * rsons], xt1, yt1);
 
-	uninit_avector(xt1);
+        uninit_avector(xt1);
 
-	xtoff += (rb->sons > 0 ? rb->son[i]->ktree : rb->t->nidx);
+        xtoff += (rb->sons > 0 ? rb->son[i]->ktree : rb->t->nidx);
       }
       assert(xtoff == rb->ktree);
 
@@ -721,40 +716,40 @@ addevalsymm_offdiag(field alpha, pch2matrix h2, pavector xt,
       xt1 = 0;
       yta1 = 0;
       if (h2->son[j * rsons]->cb == cb) {
-	xt1 = init_sub_avector(&tmp1, xt, cb->ktree, 0);
-	yta1 = init_sub_avector(&tmp2, yta, cb->ktree, 0);
-	xtoff += cb->t->nidx;
+        xt1 = init_sub_avector(&tmp1, xt, cb->ktree, 0);
+        yta1 = init_sub_avector(&tmp2, yta, cb->ktree, 0);
+        xtoff += cb->t->nidx;
       }
       else {
-	assert(j < cb->sons);
+        assert(j < cb->sons);
 
-	xt1 = init_sub_avector(&tmp1, xt, cb->son[j]->ktree, xtoff);
-	yta1 = init_sub_avector(&tmp2, yta, cb->son[j]->ktree, xtoff);
-	xtoff += cb->son[j]->ktree;
+        xt1 = init_sub_avector(&tmp1, xt, cb->son[j]->ktree, xtoff);
+        yta1 = init_sub_avector(&tmp2, yta, cb->son[j]->ktree, xtoff);
+        xtoff += cb->son[j]->ktree;
       }
 
       ytoff = rb->k;
       for (i = 0; i < rsons; i++) {
-	yt1 = 0;
-	xta1 = 0;
-	if (h2->son[i]->rb == rb) {
-	  yt1 = init_sub_avector(&tmp3, yt, rb->ktree, 0);
-	  xta1 = init_sub_avector(&tmp4, xta, rb->ktree, 0);
-	  ytoff += rb->t->nidx;
-	}
-	else {
-	  assert(i < rb->sons);
+        yt1 = 0;
+        xta1 = 0;
+        if (h2->son[i]->rb == rb) {
+          yt1 = init_sub_avector(&tmp3, yt, rb->ktree, 0);
+          xta1 = init_sub_avector(&tmp4, xta, rb->ktree, 0);
+          ytoff += rb->t->nidx;
+        }
+        else {
+          assert(i < rb->sons);
 
-	  yt1 = init_sub_avector(&tmp3, yt, rb->son[i]->ktree, ytoff);
-	  xta1 = init_sub_avector(&tmp4, xta, rb->son[i]->ktree, ytoff);
-	  ytoff += rb->son[i]->ktree;
-	}
+          yt1 = init_sub_avector(&tmp3, yt, rb->son[i]->ktree, ytoff);
+          xta1 = init_sub_avector(&tmp4, xta, rb->son[i]->ktree, ytoff);
+          ytoff += rb->son[i]->ktree;
+        }
 
-	addevalsymm_offdiag(alpha, h2->son[i + j * rsons], xt1, xta1, yt1,
-			    yta1);
+        addevalsymm_offdiag(alpha, h2->son[i + j * rsons], xt1, xta1, yt1,
+                yta1);
 
-	uninit_avector(xta1);
-	uninit_avector(yt1);
+        uninit_avector(xta1);
+        uninit_avector(yt1);
       }
       assert(ytoff == rb->ktree);
 
@@ -797,8 +792,8 @@ addevalsymm_diag(field alpha, pch2matrix h2, pavector xt,
     for (j = 0; j < n; j++) {
       yp->v[j] += alpha * aa[j + j * lda] * xp->v[j];
       for (i = j + 1; i < n; i++) {
-	yp->v[i] += alpha * aa[i + j * lda] * xp->v[j];
-	yp->v[j] += alpha * CONJ(aa[i + j * lda]) * xp->v[i];
+        yp->v[i] += alpha * aa[i + j * lda] * xp->v[j];
+        yp->v[j] += alpha * CONJ(aa[i + j * lda]) * xp->v[i];
       }
     }
 
@@ -816,16 +811,16 @@ addevalsymm_diag(field alpha, pch2matrix h2, pavector xt,
       xt1 = 0;
       yta1 = 0;
       if (h2->son[j * sons]->cb == cb) {
-	xt1 = init_sub_avector(&tmp1, xt, cb->ktree, 0);
-	yta1 = init_sub_avector(&tmp2, yta, cb->ktree, 0);
-	xtoff += cb->t->nidx;
+        xt1 = init_sub_avector(&tmp1, xt, cb->ktree, 0);
+        yta1 = init_sub_avector(&tmp2, yta, cb->ktree, 0);
+        xtoff += cb->t->nidx;
       }
       else {
-	assert(j < cb->sons);
+        assert(j < cb->sons);
 
-	xt1 = init_sub_avector(&tmp1, xt, cb->son[j]->ktree, xtoff);
-	yta1 = init_sub_avector(&tmp2, yta, cb->son[j]->ktree, xtoff);
-	xtoff += cb->son[j]->ktree;
+        xt1 = init_sub_avector(&tmp1, xt, cb->son[j]->ktree, xtoff);
+        yta1 = init_sub_avector(&tmp2, yta, cb->son[j]->ktree, xtoff);
+        xtoff += cb->son[j]->ktree;
       }
 
       ytoff = rb->k;
@@ -833,19 +828,19 @@ addevalsymm_diag(field alpha, pch2matrix h2, pavector xt,
       yt1 = 0;
       xta1 = 0;
       if (h2->son[0]->rb == rb) {
-	yt1 = init_sub_avector(&tmp3, yt, rb->ktree, 0);
-	xta1 = init_sub_avector(&tmp4, xta, rb->ktree, 0);
-	ytoff += rb->t->nidx;
+        yt1 = init_sub_avector(&tmp3, yt, rb->ktree, 0);
+        xta1 = init_sub_avector(&tmp4, xta, rb->ktree, 0);
+        ytoff += rb->t->nidx;
       }
       else {
-	/* Skip superdiagonal blocks */
-	for (i = 0; i < j; i++)
-	  ytoff += rb->son[i]->ktree;
+        /* Skip superdiagonal blocks */
+        for (i = 0; i < j; i++)
+          ytoff += rb->son[i]->ktree;
 
-	/* Subvectors for diagonal block */
-	yt1 = init_sub_avector(&tmp3, yt, rb->son[i]->ktree, ytoff);
-	xta1 = init_sub_avector(&tmp4, xta, rb->son[i]->ktree, ytoff);
-	ytoff += rb->son[i]->ktree;
+        /* Subvectors for diagonal block */
+        yt1 = init_sub_avector(&tmp3, yt, rb->son[i]->ktree, ytoff);
+        xta1 = init_sub_avector(&tmp4, xta, rb->son[i]->ktree, ytoff);
+        ytoff += rb->son[i]->ktree;
       }
 
       addevalsymm_diag(alpha, h2->son[j + j * sons], xt1, xta1, yt1, yta1);
@@ -854,17 +849,17 @@ addevalsymm_diag(field alpha, pch2matrix h2, pavector xt,
       uninit_avector(yt1);
 
       for (i = j + 1; i < sons; i++) {
-	assert(i < rb->sons);
+        assert(i < rb->sons);
 
-	yt1 = init_sub_avector(&tmp3, yt, rb->son[i]->ktree, ytoff);
-	xta1 = init_sub_avector(&tmp4, xta, rb->son[i]->ktree, ytoff);
-	ytoff += rb->son[i]->ktree;
+        yt1 = init_sub_avector(&tmp3, yt, rb->son[i]->ktree, ytoff);
+        xta1 = init_sub_avector(&tmp4, xta, rb->son[i]->ktree, ytoff);
+        ytoff += rb->son[i]->ktree;
 
-	addevalsymm_offdiag(alpha, h2->son[i + j * sons], xt1, xta1, yt1,
-			    yta1);
+        addevalsymm_offdiag(alpha, h2->son[i + j * sons], xt1, xta1, yt1,
+                yta1);
 
-	uninit_avector(xta1);
-	uninit_avector(yt1);
+        uninit_avector(xta1);
+        uninit_avector(yt1);
       }
       assert(ytoff == rb->ktree);
 

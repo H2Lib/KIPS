@@ -112,7 +112,7 @@ init_spatialgeometry(uint maxdepth, real mindiam, pspatialgeometry sg)
   real diam, x, y;
   uint** splits_temp;
   
-  assert (maxdepth > 0 && mindiam > 0.0);
+  assert (mindiam > 0.0);
   
   dim = sg->dim;
   diam = 0.0;
@@ -143,17 +143,20 @@ init_spatialgeometry(uint maxdepth, real mindiam, pspatialgeometry sg)
   for (i=0; i<dim; i++) {
     splits_temp[0][i] = 0;
   }
-  while (depth < maxdepth && diam > mindiam) {
-    x = 0.0;
-    for (i=0; i<dim; i++) {
-      y = bmax[i]-bmin[i];
-      if (y > x) {
-        x = y;
-        k = i;
-      }
+  
+  x = 0.0;
+  for (i=0; i<dim; i++) {
+    y = bmax[i]-bmin[i];
+    if (y > x) {
+      x = y;
+      k = i;
     }
-    
-    bmax[k] -= 0.5*x;
+  }
+
+  bmax[k] -= 0.5*x;
+
+  diam = REAL_SQRT(REAL_SQR(diam)-0.75*REAL_SQR(x));
+  while (depth < maxdepth && diam > mindiam) {
     depth ++;
     splits_temp[depth] = allocuint(dim);
     for (i=0; i<dim; i++) {
@@ -164,6 +167,18 @@ init_spatialgeometry(uint maxdepth, real mindiam, pspatialgeometry sg)
         splits_temp[depth][i] = splits_temp[depth-1][i];
       }
     }
+    
+    x = 0.0;
+    for (i=0; i<dim; i++) {
+      y = bmax[i]-bmin[i];
+      if (y > x) {
+        x = y;
+        k = i;
+      }
+    }
+    
+    bmax[k] -= 0.5*x;
+    
     diam = REAL_SQRT(REAL_SQR(diam)-0.75*REAL_SQR(x));
   }
   sg->depth = depth;
@@ -235,7 +250,7 @@ findCluster_spatialgeometry(uint l, pcreal x, pcspatialgeometry sg, uint *nr)
 }
 
 void
-initPoints_spatialgeometry (uint nidx, pcreal *x, pspatialgeometry sg) {
+initPoints_spatialgeometry (uint nidx, preal *x, pspatialgeometry sg) {
   uint *idx, *count;
   uint i, j, n, nr, depth;
   pspatialcluster s;

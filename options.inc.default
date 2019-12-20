@@ -11,7 +11,7 @@ DEBUG=1
 #OPT=1
 
 # Use complex numbers
-USE_COMPLEX=1
+#USE_COMPLEX=1
 
 # Use singles precision floating point numbers
 #USE_FLOAT=1
@@ -32,7 +32,7 @@ USE_TRIQUADPOINTS=1
 USE_CAIRO=1
 
 # Use OpenMP for parallelization
-#USE_OPENMP=1
+USE_OPENMP=1
 
 # Use OpenCL for heterogeneous computing
 USE_OPENCL=1

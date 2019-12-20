@@ -13,9 +13,10 @@ KIPS_CORE0 = \
 KIPS_CORE1 = \
 	Library/avector.c \
 	Library/rvector.c \
-	Library/amatrix.c \
+	Library/amatrix.c 
 
 KIPS_CORE2 = \
+	Library/quaternion.c \
 	Library/spatialcluster.c \
 	Library/spatialgeometry.c \
 	Library/clusterbasis.c \
@@ -23,7 +24,10 @@ KIPS_CORE2 = \
 	Library/h2matrix.c \
 	Library/uniform.c \
 	Library/kernelmatrix.c \
-  	Library/coulomb.c 
+  	Library/coulomb.c \
+	Library/lj.c \
+	Library/tip4p.c \
+	Library/rigid.c
 	
 SOURCES_libkips := \
 	$(KIPS_CORE0) \
@@ -46,7 +50,9 @@ SOURCES_stable := \
 	Tests/test_amatrix.c \
 	Tests/test_interpolation.c \
 	Tests/test_kernelmatrix.c \
-  	Tests/test_coulomb.c 
+  	Tests/test_coulomb.c \
+	Tests/test_tip4p.c \
+	Tests/test_quaternion.c
 
 SOURCES_tests = \
 	$(SOURCES_stable)
