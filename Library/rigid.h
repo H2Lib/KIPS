@@ -25,33 +25,38 @@ struct _molecule {
   /** @brief Number of atoms. */
   uint n;
   
+  /** @brief Mass of the molecule. */
+  real m;
+  
   /** @brief Coordinates of the center of mass. */
-  pavector com;
+  preal com;
   
   /** @brief Relative coordinates of the atoms. */
-  pavector *r;
+  preal *r;
   
   /** @brief Relative coordinates in the reference orientation. */
-  pavector *rp;
+  preal *rp;
   
   /** @brief Force vector acting on the center of mass. */
-  pavector f;
+  preal f;
   
   /** @brief Translational velocity vector. */
-  pavector v;
+  preal v;
   
   /** @brief Torque vector acting on the center of mass. */
-  pavector t;
+  preal t;
   
   /** @brief Torque vector in the reference orientation. */
-  pavector tp;
+  preal tp;
   
-  /** @brief Angular velocity vector. */
+  /** @brief Angular velocity vector in the reference frame. */
   preal w;
   
   /** @brief Memory that may be used initially for the inertia matrix 
-   *        and later on for a rotation matrix. */
-  pamatrix R;
+   *        and later on for a rotation matrix. 
+   *        Matrices will be stored compatible with BLAS 
+   *        (in column-major order). */
+  preal R;
   
   /** @brief Principal moments of inertia. */
   preal I;
@@ -65,6 +70,9 @@ struct _molecule {
   
   /** @brief Quaternion acceleration. */
   pquaternion qa;
+  
+  /** @brief Intermediary storage for half-step quantities. */
+  pquaternion qh;
 };
 
 /** @brief Type definition of a rigid molecule. */
@@ -101,14 +109,16 @@ del_molecule (pmolecule mol);
  *    Reference orientation
  *  --------------------------------------------------------------------- */
 
+HEADER_PREFIX void
+initRefOrientationFromFile_molecule (const char *file, uint n, pmolecule *mol);
+
 /** @brief Compute reference orientation of a rigid molecule.
  *
  *  Diagonalizes the inertia matrix to obtain principal moments of 
  *  inertia, relative coordinates of the reference orientation and a 
  *  quaternion corresponding to the suitable rotation as well as the 
- *  corresponding rotation matrix. Furthermore 
- *  transforms the relative atom positions and the torque towards the 
- *  reference orientation.
+ *  corresponding rotation matrix. Furthermore transforms the relative 
+ *  atom positions and the torque towards the reference orientation.
  *  Uses the Jacobi eigenvalue algorithm.
  *
  *  @remark Assumes that the matrix slot of the @ref molecule object 
@@ -135,19 +145,30 @@ adjust_molecule (pcquaternion q, pmolecule mol);
  *    Time-stepping methods
  *  --------------------------------------------------------------------- */
 
-/** @brief Compute the current angular velocity vector from the current 
- *        quaternion and the quaternion velocity.
- *
- *  @param mol Underlying molecule. */
-HEADER_PREFIX void
-angularVelocity_molecule (pmolecule mol);
+HEADER_PREFIX real 
+initVelocitiesFromFile_molecule (const char *file, uint n, pmolecule *mol);
 
-/** @brief Compute the current quaternion acceleration from the current 
- *        quaternion velocity, angular velocity and torque.
+/** @brief Perform the position integration of the Velocity Verlet method.
  *
+ *  Calculates the new position of the center of mass and the new 
+ *  orientation of the molecule after a given timestep.
+ *
+ *  @param delta Length of the timestep.
  *  @param mol Underlying molecule. */
 HEADER_PREFIX void
-quaternionAcceleration_molecule (pmolecule mol);
+positionVerlet_molecule (real delta, pmolecule mol);
+
+/** @brief Perform the velocity integration of the Velocity Verlet method.
+ *
+ *  Calculates the new velocities of the translational and rotational motion, 
+ *  respectively, after a given timestep.
+ *
+ *  @param delta Length of the timestep.
+ *  @param mol Underlying molecule. 
+ *
+ *  @returns Current kinetic energy of the molecule. */
+HEADER_PREFIX real
+velocityVerlet_molecule (real delta, pmolecule mol);
 
 /** @} */
 

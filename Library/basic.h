@@ -45,7 +45,7 @@ typedef stopwatch *pstopwatch;
 #define EPS_0 8.8541878128e-12
 
 /** @brief Boltzmann constant. */
-#define K_B 1.380649e-23
+#define K_B 1.3806504e-23//49e-23
 
 /** @brief Avogadro number. */
 #define N_A 6.02214076e23
@@ -54,10 +54,10 @@ typedef stopwatch *pstopwatch;
 #define U 1.66053906660e-27
 
 /** @brief Atomic mass of hydrogen. */
-#define M_H 1.008 * U
+#define M_H 1.674e-27//1.008 * U
 
 /** @brief Atomic mass of oxygen. */
-#define M_O 15.999 * U
+#define M_O 2.657e-26//15.999 * U
 
 /** @brief Number of power iteration steps used to approximate the spectral norm. */
 #define NORM_STEPS 20

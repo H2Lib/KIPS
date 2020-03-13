@@ -206,8 +206,6 @@ sum_potential_cutoff (uint dim, uint ldim, uint *j, uint *m, pcreal d, int *j0,
         if (c < R2) {
           r = REAL_SQRT (c);
           V += s (alpha, R, r) / r;
-          if (c < 1.0e-20) {
-            }
         }
       }
       c -= b;

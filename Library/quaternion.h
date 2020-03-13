@@ -45,6 +45,21 @@ del_quaternion (pquaternion q);
  *    Basic operations
  * --------------------------------------------------------------------- */
 
+/** @brief Set quaternion to zero.
+ *
+ *  @param q Underlying quaternion. */
+HEADER_PREFIX void 
+clear_quaternion (pquaternion q);
+
+/** @brief Copy quaternion.
+ *
+ *  @remark Does not allocate storage, only assigns values.
+ *
+ *  @param p Original quaternion.
+ *  @param q Copy of \p p. */
+HEADER_PREFIX void
+copy_quaternion (pcquaternion p, pquaternion q);
+
 /** @brief Normalize a quaternion.
  *
  *  Divide the quaternion components by the euclidean norm of the 
@@ -71,7 +86,7 @@ update_quaternion (pcquaternion p, pquaternion q);
  *  @param q Rotation quaternion.
  *  @param R Rotation matrix. */
 HEADER_PREFIX void 
-buildRotation_quaternion (pcquaternion q, pamatrix R);
+buildRotation_quaternion (pcquaternion q, preal R);
 
 
 /* ---------------------------------------------------------------------
@@ -87,6 +102,6 @@ buildRotation_quaternion (pcquaternion q, pamatrix R);
  *  @param q Rotation quaternion.
  *  @param R Rotation matrix. */
 HEADER_PREFIX uint 
-Jacobi_quaternion (pamatrix A, pquaternion q);
+Jacobi_quaternion (preal A, pquaternion q);
 
 #endif

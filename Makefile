@@ -27,6 +27,7 @@ KIPS_CORE2 = \
   	Library/coulomb.c \
 	Library/lj.c \
 	Library/tip4p.c \
+	Library/tip3p.c \
 	Library/rigid.c
 	
 SOURCES_libkips := \
@@ -52,7 +53,8 @@ SOURCES_stable := \
 	Tests/test_kernelmatrix.c \
   	Tests/test_coulomb.c \
 	Tests/test_tip4p.c \
-	Tests/test_eigenvalue.c
+	Tests/test_eigenvalue.c \
+	Tests/test_tip4p_2.c
 
 SOURCES_tests = \
 	$(SOURCES_stable)
@@ -144,9 +146,9 @@ endif
 $(PROGRAMS_tests): %: %.o
 ifdef BRIEF_OUTPUT
 	@echo Linking $@
-	@$(CC) $(LDFLAGS) $< -o $@ -lkips $(LIBS) 
+	@$(CC) $(LDFLAGS) $< -o $@ -lkips $(LIBS)
 else
-	$(CC) $(LDFLAGS) $< -o $@ -lkips $(LIBS) 
+	$(CC) $(LDFLAGS) $< -o $@ -lkips $(LIBS)
 endif
 
 $(PROGRAMS_tests) $(PROGRAMS_tools): libkips.a
@@ -154,11 +156,11 @@ $(PROGRAMS_tests) $(PROGRAMS_tools): libkips.a
 $(OBJECTS_tests): %.o: %.c
 ifdef BRIEF_OUTPUT
 	@echo Compiling $<
-	@$(GCC) -MT $@ -MM -I Library $< > $(<:%.c=%.d)
-	@$(CC) $(CFLAGS) -I Library -c $< -o $@
+	@$(GCC) -MT $@ -MM -I ./Library $< > $(<:%.c=%.d)
+	@$(CC) $(CFLAGS) -I ./Library -c $< -o $@
 else
-	@$(GCC) -MT $@ -MM -I Library $< > $(<:%.c=%.d)
-	$(CC) $(CFLAGS) -I Library -c $< -o $@
+	@$(GCC) -MT $@ -MM -I ./Library $< > $(<:%.c=%.d)
+	$(CC) $(CFLAGS) -I ./Library -c $< -o $@
 endif
 
 -include $(DEPENDENCIES_tests) $(DEPENDENCIES_tools)
@@ -181,11 +183,11 @@ $(PROGRAMS_examples): libkips.a
 $(OBJECTS_examples): %.o: %.c
 ifdef BRIEF_OUTPUT
 	@echo Compiling $<
-	@$(GCC) -MT $@ -MM -I Library $< > $(<:%.c=%.d)
-	@$(CC) $(CFLAGS) -I Library -c $< -o $@
+	@$(GCC) -MT $@ -MM -I ./Library $< > $(<:%.c=%.d)
+	@$(CC) $(CFLAGS) -I ./Library -c $< -o $@
 else
-	@$(GCC) -MT $@ -MM -I Library $< > $(<:%.c=%.d)
-	$(CC) $(CFLAGS) -I Library -c $< -o $@
+	@$(GCC) -MT $@ -MM -I ./Library $< > $(<:%.c=%.d)
+	$(CC) $(CFLAGS) -I ./Library -c $< -o $@
 endif
 
 -include $(DEPENDENCIES_examples)

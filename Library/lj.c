@@ -1,6 +1,6 @@
 #include "lj.h"
 #include <math.h>
-
+#include <stdio.h>
 
 /** ----------------------------------------------------------------
  *    Parameters
@@ -116,7 +116,7 @@ shortrangePotential_lj (pcreal x, pcreal y, bool exclude, plj par) {
   m = allocuint (dim);
   j0 = (int *) allocmem (sizeof (int) * dim);
   
-  // Determine all periodic copies of x within the given radius around y.
+  // Determine all periodic copies of y within the given radius around x.
   for (i=0; i<dim; i++) {
     d[i] = sg->bmax[i] - sg->bmin[i];
     jmin = ceil ((x[i] - y[i] - R) / d[i]);
@@ -220,6 +220,7 @@ sum_gradient_cutoff (uint dim, uint ldim, uint *j, uint *m, pcreal d, int *j0,
     }
     for (i=0; i<m[0]; i++) {
       if (i != j0[0] || exclude == false) {
+        //printf ("r^2=%le\n", r2);
         if (r2 < R2) {
           r4 = r2 * r2;
           r8 = r4 * r4;
@@ -255,7 +256,7 @@ shortrangeGradient_lj (pcreal x, pcreal y, bool exclude, plj par, pfield f) {
   m = allocuint (dim);
   j0 = (int *) allocmem (sizeof (int) * dim);
   
-  // Determine all periodic copies of x within the given radius around y.
+  // Determine all periodic copies of y within the given radius around x.
   for (i=0; i<dim; i++) {
     d[i] = sg->bmax[i] - sg->bmin[i];
     jmin = ceil ((x[i] - y[i] - R) / d[i]);
@@ -265,6 +266,7 @@ shortrangeGradient_lj (pcreal x, pcreal y, bool exclude, plj par, pfield f) {
     j[i] = 0;
     f[i] = 0.0;
     j0[i] = jmin;
+    //printf ("%d  %d  %u  %u\n", jmin, jmax, m[i], exclude);
   }
   
   sum_gradient_cutoff (dim, dim, j, m, d, j0, exclude, R, par->sig12, par->sig6, 
@@ -288,6 +290,7 @@ gradient_lj (pcreal x, pcreal y, uint xmol, uint ymol, void *data, pfield f) {
   else {
     shortrangeGradient_lj (x, y, false, (plj) data, f);
   }
+  //printf ("%le\n", sqrt((x[0]-y[0])*(x[0]-y[0])+(x[1]-y[1])*(x[1]-y[1])+(x[2]-y[2])*(x[2]-y[2])));
 }
 
 void

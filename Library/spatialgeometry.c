@@ -7,6 +7,7 @@
 #include "basic.h"
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
 
 
 /* ------------------------------------------------------------
@@ -236,7 +237,11 @@ findCluster_spatialgeometry(uint l, pcreal x, pcspatialgeometry sg, uint *nr)
     max = sg->bmax[i];
     d = max-min;
     assert (d > 0.0);
-    assert (x[i] >= min && x[i] < max);
+    //assert (x[i] >= min && x[i] < max);
+    if (x[i] >= max || x[i] < min) {
+       printf ("x_%u = %le  not in interval [%le,%le]\n", i, x[i], min, max);
+      exit (0);
+    }
     n = countindirection_spatialgeometry (l, i, sg);
     
     j = floor ((x[i]-min)/d*n);

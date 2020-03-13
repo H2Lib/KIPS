@@ -7,7 +7,7 @@
 
 int main (void) {
   pamatrix A, R;
-  preal a;
+  preal a, r;
   pquaternion q;
   uint iter;
   
@@ -15,6 +15,7 @@ int main (void) {
   R = new_amatrix (3, 3);
   q = new_quaternion ();
   a = A->a;
+  r = R->a;
   
   a[0] = 1.0; a[1] = 4.0; a[2] = 5.0;
   a[3] = a[1]; a[4] = 2.0; a[5] = 6.0;
@@ -22,12 +23,12 @@ int main (void) {
   printf ("Non-diagonal matrix:\n");
   print_amatrix (A);
   
-  iter = Jacobi_quaternion (A, q);
+  iter = Jacobi_quaternion (a, q);
   printf ("Diagonalization complete after %u steps\n", iter);
   printf ("Diagonal matrix:\n");
   print_amatrix (A);
   
-  buildRotation_quaternion (q, R);
+  buildRotation_quaternion (q, r);
   printf ("Corresponding rotation matrix:\n");
   print_amatrix (R);
   

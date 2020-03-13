@@ -1,20 +1,20 @@
 /** ------------------------------------------------------------
- *    This is the file "tip4p.h" of the KIPS package.
+ *    This is the file "tip3p.h" of the KIPS package.
  *    All rights reserved, Jonas Lorenzen 2019
  *  ------------------------------------------------------------ */
 
-/** @file tip4p.h
+/** @file tip3p.h
  *  @author Jonas Lorenzen
  */
 
-#ifndef TIP4P_H
-#define TIP4P_H
+#ifndef TIP3P_H
+#define TIP3P_H
 
-/** @defgroup tip4p tip4p
- *  @brief Energy and force calculation for the TIP4P model of water.
+/** @defgroup tip3p tip3p
+ *  @brief Energy and force calculation for the TIP3P model of water.
  *
  *  @attention (Almost) All functions in this module enforce the use of SI units! 
- *            The only exception is the input file for the @ref inputfile_tip4p 
+ *            The only exception is the input file for the @ref inputfile_tip3p 
  *            function.
  *  @{ */
 
@@ -25,8 +25,8 @@
 #include "lj.h"
 #include "rigid.h"
 
-/** @brief Representation of a system of water molecules in the TIP4P model. */
-struct _tip4p {
+/** @brief Representation of a system of water molecules in the TIP3P model. */
+struct _tip3p {
   /** @brief Number of water molecules. */
   uint n;
   
@@ -50,62 +50,59 @@ struct _tip4p {
 };
 
 /** @brief Type definition of a system of water molecules. */
-typedef struct _tip4p tip4p;
+typedef struct _tip3p tip3p;
 
-/** @brief Pointer to a @ref tip4p object. */
-typedef tip4p *ptip4p;
+/** @brief Pointer to a @ref tip3p object. */
+typedef tip3p *ptip3p;
 
 
 /** ---------------------------------------------------------------------
- *    Global parameters of the TIP4P model
+ *    Global parameters of the TIP3P model
  *  --------------------------------------------------------------------- */
 
 // Zero of the Lennard-Jones potential.
-#define SIG_TIP4P 3.154e-10;
+#define SIG_TIP3P 3.15066e-10;
 
 // Depth of the potential well of the Lennard-Jones potential.
-#define EPS_TIP4P 1.0769e-21;
+#define EPS_TIP3P 1.0566e-21;
 
 // Charge of hydrogen atoms (dimensionless).
-#define QH_TIP4P 0.52;
+#define QH_TIP3P 0.417;
 
-// Virtual charges (dimensionless).
-#define QM_TIP4P -1.04;
+// Oxygen charge (dimensionless).
+#define QM_TIP3P -0.834;
 
 // Distance between hydrogen and oxygen atoms.
-#define ROH_TIP4P 9.572e-11;
-
-// Distance between oxygen atoms and virtual charges.
-#define ROM_TIP4P 1.5e-11;
+#define ROH_TIP3P 9.572e-11;
 
 /** Distance between hydrogen atoms, corresponding to an H-O-H angle 
  *  of 104,52°. */
-#define RHH_TIP4P 1.5e-10;
+#define RHH_TIP3P 1.5e-10;
 
 /** ---------------------------------------------------------------------
  *    Constructors and destructors
  *  --------------------------------------------------------------------- */
  
-/** @brief Create a new empty @ref tip4p object.
+/** @brief Create a new empty @ref tip3p object.
  *
  *  Only allocates storage for the components.
  *  Also sets up the vector of charges such that, for each molecule, the 
  *  virtual negative charge is followed by the two positive charges of the 
  *  hydrogen atoms. The site vectors should be ordered accordingly.
  *
- *  @remark Should always be matched by a call to @ref del_tip4p.
+ *  @remark Should always be matched by a call to @ref del_tip3p.
  *
  *  @param n Number of water molecules.
  *
- *  @returns Pointer to new tip4p object. */
-HEADER_PREFIX ptip4p 
-new_tip4p (uint n);
+ *  @returns Pointer to new tip3p object. */
+HEADER_PREFIX ptip3p 
+new_tip3p (uint n);
 
-/** @brief Delete a @ref tip4p object.
+/** @brief Delete a @ref tip3p object.
  *
  *  @param t System of water molecules to be deleted. */
 HEADER_PREFIX void
-del_tip4p (ptip4p t);
+del_tip3p (ptip3p t);
  
 
 /** ---------------------------------------------------------------------
@@ -115,8 +112,8 @@ del_tip4p (ptip4p t);
 /** @brief Load a system of water molecules from a file. 
  *
  *  Reads the coordinates and types of atoms from a .xyz-type file, 
- *  adds virtual charges corresponding to the TIP4P model and stores 
- *  the system in a @ref tip4p object.
+ *  adds virtual charges corresponding to the TIP3P model and stores 
+ *  the system in a @ref tip3p object.
  *
  *  @remark Assumes that the atoms are listed in a way such that the oxygen 
  *  atom of a water molecule is followed by the two corresponding hydrogen 
@@ -127,15 +124,15 @@ del_tip4p (ptip4p t);
  *
  *  @param file Name of the input file.
  *
- *  @returns Pointer to a new @ref tip4p object. */
-HEADER_PREFIX ptip4p 
-inputfile_tip4p (const char *file);
+ *  @returns Pointer to a new @ref tip3p object. */
+HEADER_PREFIX ptip3p 
+inputfile_tip3p (const char *file);
 
 /** ---------------------------------------------------------------------
  *    Energy and force calculation
  *  --------------------------------------------------------------------- */
 
-/** @brief Calculate the potential energy of the TIP4P system.
+/** @brief Calculate the potential energy of the TIP3P system.
  *
  *  Calculate the electrostatic energy via smooth cutoff schemes for the 
  *  Coulomb and Lennard-Jones potentials, respectively. 
@@ -155,8 +152,8 @@ inputfile_tip4p (const char *file);
  *
  *  @returns Value of the potential energy of the system. */
 HEADER_PREFIX real
-energy_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
-                 ph2matrix Vc, ph2matrix Vlj, ptip4p t);
+energy_tip3p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
+                 ph2matrix Vc, ph2matrix Vlj, ptip3p t);
 
 /** @brief Calculate the force vector acting on the center of mass for each 
  *        molecule.
@@ -165,7 +162,7 @@ energy_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj,
  *  @param flj Concatenated vector of all Lennard-Jones forces.
  *  @param t System of water molecules. */
 HEADER_PREFIX real
-calcForce_tip4p (pavector fc, pavector flj, ptip4p t);
+calcForce_tip3p (pavector fc, pavector flj, ptip3p t);
 
 /** @brief Calculate the torque vector acting on the center of mass for each 
  *        molecule.
@@ -174,7 +171,7 @@ calcForce_tip4p (pavector fc, pavector flj, ptip4p t);
  *  @param flj Concatenated vector of all Lennard-Jones forces.
  *  @param t System of water molecules. */
 HEADER_PREFIX real
-calcTorque_tip4p (pavector fc, pavector flj, ptip4p t);
+calcTorque_tip3p (pavector fc, pavector flj, ptip3p t);
 
 /** @brief Recalculation of positions, forces and torques.
  *
@@ -191,8 +188,8 @@ calcTorque_tip4p (pavector fc, pavector flj, ptip4p t);
  *  @param flj Concatenated vector of all Lennard-Jones forces.
  *  @param t System of water molecules. */
 HEADER_PREFIX void
-update_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
-              ph2matrix Fc, ph2matrix Flj, pavector fc, pavector flj, ptip4p t);
+update_tip3p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
+              ph2matrix Fc, ph2matrix Flj, pavector fc, pavector flj, ptip3p t);
 
 /** ---------------------------------------------------------------------
  *    Optimization
@@ -200,7 +197,7 @@ update_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj,
 
 /** @brief Gradient descent method for minimization of the potential energy.
  *
- *  Does the same calculation as @ref energy_tip4p, then performs one step of 
+ *  Does the same calculation as @ref energy_tip3p, then performs one step of 
  *  the gradient descent method and finally recalculates the potential energy.
  *  The step size is determined by a backtracking line search. A control 
  *  parameter of one half for the decrease of energy is used.
@@ -222,14 +219,14 @@ update_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj,
  *
  *  @returns New value of the potential energy of the system. */
 HEADER_PREFIX real
-gradientDescent_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
+gradientDescent_tip3p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
                        ph2matrix Vc, ph2matrix Fc, ph2matrix Vlj, ph2matrix Flj, 
-                       real lambda, real nu, uint m, ptip4p t);
+                       real lambda, real nu, uint m, ptip3p t);
 
 //HEADER_PREFIX real
-//gradientDescentRotation_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
+//gradientDescentRotation_tip3p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
 //                              ph2matrix Vc, ph2matrix Fc, ph2matrix Vlj, ph2matrix Flj, 
-//                              real lambda, real nu, uint m, ptip4p t);
+//                              real lambda, real nu, uint m, ptip3p t);
 
 /** ----------------------------------------------------------------------
  *    Time-stepping methods
@@ -240,7 +237,7 @@ gradientDescent_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj,
  *
  *  @param t System of water molecules. */
 HEADER_PREFIX void
-initMolecules_tip4p (ptip4p t);
+initMolecules_tip3p (ptip3p t);
 
 /** @brief One step of the Velocity Verlet scheme.
  *
@@ -260,9 +257,9 @@ initMolecules_tip4p (ptip4p t);
  *
  *  @returns Current kinetic energy of the system. */
 HEADER_PREFIX real
-velocityVerlet_tip4p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
+velocityVerlet_tip3p (pspatialgeometry sg, pkernelmatrix kc, pkernelmatrix klj, 
                       ph2matrix Fc, ph2matrix Flj, pavector fc, pavector flj, 
-                      real delta, ptip4p t);
+                      real delta, ptip3p t);
 
 /** @} */
 

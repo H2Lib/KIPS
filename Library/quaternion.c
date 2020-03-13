@@ -22,6 +22,22 @@ del_quaternion (pquaternion q) {
  *    Basic operations
  * --------------------------------------------------------------------- */
 
+void 
+clear_quaternion (pquaternion q) {
+  q[0] = 0.0;
+  q[1] = 0.0;
+  q[2] = 0.0;
+  q[3] = 0.0;
+}
+
+void
+copy_quaternion (pcquaternion p, pquaternion q) {
+  q[0] = p[0];
+  q[1] = p[1];
+  q[2] = p[2];
+  q[3] = p[3];
+}
+
 void
 normalize_quaternion (pquaternion q) {
   real norm;
@@ -45,19 +61,17 @@ void update_quaternion (pcquaternion p, pquaternion q) {
   q[3] = z3;
 }
 
-void buildRotation_quaternion (pcquaternion q, pamatrix R) {
-  assert (R->rows == 3 && R->cols == 3);
-  preal r = R->a;
+void buildRotation_quaternion (pcquaternion q, preal R) {
   
-  r[0] = q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3];
-  r[1] = 2.0 * (q[1] * q[2] + q[0] * q[3]);
-  r[2] = 2.0 * (q[1] * q[3] - q[0] * q[2]);
-  r[3] = 2.0 * (q[1] * q[2] - q[0] * q[3]);
-  r[4] = q[0] * q[0] - q[1] * q[1] + q[2] * q[2] - q[3] * q[3];
-  r[5] = 2.0 * (q[2] * q[3] + q[0] * q[1]);
-  r[6] = 2.0 * (q[1] * q[3] + q[0] * q[2]);
-  r[7] = 2.0 * (q[2] * q[3] - q[0] * q[1]);
-  r[8] = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
+  R[0] = q[0] * q[0] + q[1] * q[1] - q[2] * q[2] - q[3] * q[3];
+  R[1] = 2.0 * (q[1] * q[2] + q[0] * q[3]);
+  R[2] = 2.0 * (q[1] * q[3] - q[0] * q[2]);
+  R[3] = 2.0 * (q[1] * q[2] - q[0] * q[3]);
+  R[4] = q[0] * q[0] - q[1] * q[1] + q[2] * q[2] - q[3] * q[3];
+  R[5] = 2.0 * (q[2] * q[3] + q[0] * q[1]);
+  R[6] = 2.0 * (q[1] * q[3] + q[0] * q[2]);
+  R[7] = 2.0 * (q[2] * q[3] - q[0] * q[1]);
+  R[8] = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3];
 }
 
 
@@ -65,19 +79,11 @@ void buildRotation_quaternion (pcquaternion q, pamatrix R) {
  *    Diagonalization
  * --------------------------------------------------------------------- */
 
-uint Jacobi_quaternion (pamatrix A, pquaternion q) {
+uint Jacobi_quaternion (preal A, pquaternion q) {
   
-  uint lda, n, i, j, k, l, iter;
+  uint i, j, k, l, iter;
   real tau, t, c, s, h, off, b, c_h, s_h, t_h, normf;
-  pfield aa;
   preal p;
-  
-  n = 3;
-  lda = A->ld;
-  aa = A->a;
-  
-  assert (n == A->cols);
-  assert (n == A->rows);
   
   p = new_quaternion ();
   q[0] = 1.0;
@@ -89,9 +95,9 @@ uint Jacobi_quaternion (pamatrix A, pquaternion q) {
   // Determine squared Frobenius norm of the off-diagonal part.
   off = 0.0;
   normf = 0.0;
-  for (i=0; i<n; i++) {
-    for (j=0; j<n; j++) {
-      b = ABSSQR (aa[i+j*lda]);
+  for (i=0; i<3; i++) {
+    for (j=0; j<3; j++) {
+      b = ABSSQR (A[i+j*3]);
       normf += b;
       if (i != j) {
         off += b;
@@ -103,9 +109,9 @@ uint Jacobi_quaternion (pamatrix A, pquaternion q) {
     // Determine largest off-diagonal matrix entry.
     i = 0;
     j = 1;
-    for (l=1; l<n; l++) {
+    for (l=1; l<3; l++) {
       for (k=0; k<l; k++) {
-        if (ABS (aa[k+l*lda]) > ABS (aa[i+j*lda])) {
+        if (ABS (A[k+l*3]) > ABS (A[i+j*3])) {
           i = k;
           j = l;
         }
@@ -113,10 +119,10 @@ uint Jacobi_quaternion (pamatrix A, pquaternion q) {
     }
     
     // Determine suitable Givens rotation.
-    b = aa[i+j*lda];
-    tau = (aa[j+j*lda] - aa[i+i*lda]) / (2.0 * b);
+    b = A[i+j*3];
+    tau = (A[j+j*3] - A[i+i*3]) / (2.0 * b);
     t = -SIGN1 (tau) / (ABS (tau) + REAL_SQRT (ABSSQR (tau) + 1));
-    c = 1.0 / REAL_SQRT (1 + t * CONJ (t));
+    c = 1.0 / REAL_SQRT (1 + ABSSQR (t));
     s = t * c;
     
     // Half angle formulas.
@@ -139,15 +145,15 @@ uint Jacobi_quaternion (pamatrix A, pquaternion q) {
     
     // Multiply quaternions and update matrix.
     update_quaternion (p, q);
-    for (k=0; k<n; k++) {
-      h = aa[k+i*lda];
-      aa[k+i*lda] = h * c + aa[k+j*lda] * s;
-      aa[k+j*lda] = aa[k+j*lda] * c - h * CONJ (s);
+    for (k=0; k<3; k++) {
+      h = A[k+i*3];
+      A[k+i*3] = h * c + A[k+j*3] * s;
+      A[k+j*3] = A[k+j*3] * c - h * CONJ (s);
     }
-    for (k=0; k<n; k++) {
-      h = aa[i+k*lda];
-      aa[i+k*lda] = h * c + aa[j+k*lda] * CONJ (s);
-      aa[j+k*lda] = aa[j+k*lda] * c - h * s;
+    for (k=0; k<3; k++) {
+      h = A[i+k*3];
+      A[i+k*3] = h * c + A[j+k*3] * CONJ (s);
+      A[j+k*3] = A[j+k*3] * c - h * s;
     }
     off -= 2.0 * ABSSQR (b);
     iter++;
